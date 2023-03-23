@@ -1,0 +1,51 @@
+<?php
+
+namespace WPD_Platform;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit; // Exit if accessed directly.
+}
+
+/**
+ * Class Singleton
+ *
+ * @package Dollie\Core
+ */
+class Singleton {
+
+	/**
+	 * @var array
+	 */
+	public static $instances = [];
+
+	/**
+	 * Singleton constructor.
+	 */
+	protected function __construct() {
+	}
+
+	/**
+	 * Don't allow clone
+	 */
+	private function __clone() {
+	}
+
+	public function __wakeup() {
+	}
+
+	/**
+	 * Get instance
+	 *
+	 * @return mixed
+	 */
+	public static function instance() {
+		$class = static::class;
+
+		if ( ! isset( self::$instances[ $class ] ) ) {
+			self::$instances[ $class ] = new $class();
+		}
+
+		return self::$instances[ $class ];
+	}
+
+}

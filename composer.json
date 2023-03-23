@@ -1,0 +1,11 @@
+{
+  "autoload": {
+    "psr-4": {
+      "WPD_Platform\\": "core/"
+    }
+  },
+  "require-dev": {
+    "roave/security-advisories": "dev-latest",
+    "wp-cli/wp-cli-bundle": "*"
+  }
+}
