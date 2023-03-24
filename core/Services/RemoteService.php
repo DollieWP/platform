@@ -209,7 +209,7 @@ class RemoteService extends Singleton {
 	 * @return void
 	 */
 	public function action_login_token( $params, $action ) {
-		$username = $params?->username;
+		$username = isset($params->username) ? $params->username: null;
 		$token    = LoginService::instance()->get_login_token( $username );
 
 		if ( empty( $token ) ) {
