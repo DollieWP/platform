@@ -14,7 +14,7 @@ abstract class BaseHost implements HostInterface {
 	 * @var string Where we store our token
 	 */
 	private $token;
-	private $host_type;
+	protected $host_type;
 	private $secret = '';
 
 	public function __construct() {
