@@ -45,4 +45,4 @@ function pf_load_platform_code() {
 // Register the plugin activation hook.
 register_activation_hook( __FILE__, array( \WPD_Platform\Plugin::instance(), 'activate_plugin' ) );
 
-define( 'WPD_PARTNER_ID', 'eyJpdiI6Inl6WXcrN3hJVGFpanNkc2d5bTBQblE9PSIsInZhbHVlIjoidjRGb1VVUTJ5MEtDa2c0WTJMRGtsdz09IiwibWFjIjoiMDgzNDNjM2U0MDEzNDc2NDM5ODJmZGRlYWM1ZjYyYWI1NzkzNTBlNGM2NTlhNjlhOTZlMmYyMGZkOTRlMjA0OCIsInRhZyI6IiJ9' );
+define( 'WPD_PARTNER_ID', '_partnerid_' );
