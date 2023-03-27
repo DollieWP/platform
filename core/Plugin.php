@@ -172,7 +172,13 @@ final class Plugin {
 		return $load_email_overrides;
 	}
 
+	/**
+	 * @return bool
+	 */
 	private function should_load_platform_cache() {
+		if ( $this->get_host()->is_type_external() ) {
+			return false;
+		}
 		if ( ! function_exists( 'is_plugin_active' ) ) {
 			include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
 		}
@@ -229,7 +235,7 @@ final class Plugin {
 
 
 	public function activate_plugin() {
-		if (!$this->is_wpmu()) {
+		if ( ! $this->is_wpmu() ) {
 			$this->get_host()->register_site();
 		}
 	}
