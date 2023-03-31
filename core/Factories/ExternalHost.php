@@ -113,7 +113,7 @@ class ExternalHost extends BaseHost {
 		$api_host = defined( 'WPD_WORKER_API_URL' ) ? WPD_WORKER_API_URL : self::API_URL;
 		$response = wp_remote_post( $api_host . "external-sites/connect", [
 			'headers' => array(
-				'Authorization' => 'Authorization ' . $this->get_token()
+				'Authorization' => $this->get_token()
 			),
 			'body'      => [
 				'partner_hash' => $this->get_partner_hash(),
