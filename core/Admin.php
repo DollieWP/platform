@@ -48,16 +48,16 @@ class Admin extends Singleton {
 		$response = wp_remote_request( HostInterface::API_URL . 'external-sites/' . get_option('wpd_connection_id'), array(
 			'method'  => 'DELETE',
 			'headers' => array(
-				'Authorization' => 'Authorization ' . $signature
+				'Authorization' => $signature
 			),
 
 			'timeout' => 30,
 		) );
 
 		if ( ! is_wp_error( $response ) ) {
+			Plugin::instance()->get_host()->remove_connection();
 			wp_send_json_success( 'Successfully removed site!' );
 		} else {
-			Plugin::instance()->get_host()->remove_connection();
 			wp_send_json_error( $response->get_error_message() );
 		}
 		wp_die();
