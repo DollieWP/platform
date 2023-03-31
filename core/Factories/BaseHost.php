@@ -67,6 +67,10 @@ abstract class BaseHost implements HostInterface {
 		return false;
 	}
 
+	public function remove_connection() {
+		return true;
+	}
+
 	public function is_type_internal() {
 		return $this->get_type() === self::TYPE_1;
 	}

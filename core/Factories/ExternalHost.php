@@ -72,6 +72,13 @@ class ExternalHost extends BaseHost {
 		update_option( 'wpd_connection_id', $site_id );
 	}
 
+	public function remove_connection() {
+		delete_option( 'wpd_connection_id' );
+		delete_option( self::TOKEN_OPTION );
+
+		return true;
+	}
+
 	public function register_site() {
 
 		if ( $this->is_connected() ) {

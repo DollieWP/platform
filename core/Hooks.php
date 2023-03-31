@@ -9,5 +9,8 @@ class Hooks {
 
 		add_action( 'init', [ RemoteService::instance(), 'run' ], 999 );
 
+		add_action( 'admin_menu', [ Admin::instance(), 'settings_page' ] );
+		add_action('wp_ajax_dollie_connect_remove_site', [ Admin::instance(), 'ajax_callback_remove_site' ]);
+
 	}
 }
