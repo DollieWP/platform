@@ -32,8 +32,6 @@ class Admin extends Singleton {
 
 	public function ajax_callback_remove_site() {
 
-		wp_send_json_success( 'Successfully removed site!' );
-
 		// Check for nonce security
 		if ( ! wp_verify_nonce( $_POST['nonce'], 'dollie_connect_ajax_nonce' ) ) {
 			wp_send_json_error( 'Not allowed!' );
