@@ -68,8 +68,17 @@ class ExternalHost extends BaseHost {
 		return get_option( 'wpd_connection_id' );
 	}
 
+	/**
+     * Save site hash and partner hash in DB.
+     *
+	 * @param $site_id
+	 *
+	 * @return void
+	 */
 	public function setup_connection( $site_id ) {
 		update_option( 'wpd_connection_id', $site_id );
+		update_option( 'wpd_connection_partner_hash', $this->get_partner_hash() );
+
 	}
 
 	public function remove_connection() {
@@ -79,13 +88,19 @@ class ExternalHost extends BaseHost {
 		return true;
 	}
 
+    public function get_partner_hash() {
+	    $partner_hash = '';
+
+	    if ( defined( 'WPD_PARTNER_ID' ) && ! empty( WPD_PARTNER_ID ) ) {
+            return WPD_PARTNER_ID;
+	    }
+
+	    return get_option( 'wpd_connection_partner_hash', $partner_hash ) ;
+    }
+
 	public function register_site() {
 
 		if ( $this->is_connected() ) {
-			return;
-		}
-
-		if ( ! defined( 'WPD_PARTNER_ID' ) || empty( WPD_PARTNER_ID ) ) {
 			return;
 		}
 
@@ -97,8 +112,11 @@ class ExternalHost extends BaseHost {
 
 		$api_host = defined( 'WPD_WORKER_API_URL' ) ? WPD_WORKER_API_URL : self::API_URL;
 		$response = wp_remote_post( $api_host . "external-sites/connect", [
+			'headers' => array(
+				'Authorization' => 'Authorization ' . $this->get_token()
+			),
 			'body'      => [
-				'partner_hash' => WPD_PARTNER_ID,
+				'partner_hash' => $this->get_partner_hash(),
 				'name'         => get_bloginfo( 'name' ),
 				'description'  => get_bloginfo( 'description' ),
 				'uri'          => site_url(),
@@ -106,7 +124,6 @@ class ExternalHost extends BaseHost {
 				'email'        => $current_user->user_email,
 				'wp_version'   => get_bloginfo( 'version' ),
 				'php_version'  => phpversion(),
-				'site_token'   => $this->get_token()
 			],
 			'timeout'   => 30,
 			'sslverify' => apply_filters( 'https_local_ssl_verify', false ),

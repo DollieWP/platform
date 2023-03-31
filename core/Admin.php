@@ -43,12 +43,12 @@ class Admin extends Singleton {
 			wp_send_json_error( 'Not allowed!' );
 		}
 
-		$current_user = wp_get_current_user();
+        $signature = sha1(Plugin::instance()->get_host()->get_token() . Plugin::instance()->get_host()->get_partner_hash());
 
 		$response = wp_remote_request( HostInterface::API_URL . 'external-sites/' . get_option('wpd_connection_id'), array(
 			'method'  => 'DELETE',
 			'headers' => array(
-				'Authorization' => 'Authorization ' . Plugin::instance()->get_host()->get_token()
+				'Authorization' => 'Authorization ' . $signature
 			),
 
 			'timeout' => 30,
