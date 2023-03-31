@@ -45,17 +45,12 @@ class Admin extends Singleton {
 
 		$current_user = wp_get_current_user();
 
-		$response = wp_remote_request( HostInterface::API_URL . 'sites/connect', array(
+		$response = wp_remote_request( HostInterface::API_URL . 'external-sites/' . get_option('wpd_connection_id'), array(
 			'method'  => 'DELETE',
 			'headers' => array(
 				'Authorization' => 'Authorization ' . Plugin::instance()->get_host()->get_token()
 			),
-			'body'    => [
-				'partner_hash' => WPD_PARTNER_ID,
-				'description'  => get_bloginfo( 'description' ),
-				'uri'          => site_url(),
-				'username'     => $current_user->user_login,
-			],
+
 			'timeout' => 30,
 		) );
 
