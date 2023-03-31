@@ -25,7 +25,7 @@ class Admin extends Singleton {
 	}
 
 	public function enqueue_assets() {
-		wp_enqueue_style( 'wpd-admin', PLATFORM_PLUGIN_URL . 'assets/dist/admin.css' );
+		wp_enqueue_style( 'wpd-admin', PLATFORM_PLUGIN_URL . 'assets/dst/admin.css' );
 		wp_enqueue_script( 'alpinejs', PLATFORM_PLUGIN_URL . 'assets/js/alpine.min.js', array(), null, true );
 
 	}
