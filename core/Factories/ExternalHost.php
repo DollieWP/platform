@@ -98,16 +98,21 @@ class ExternalHost extends BaseHost {
 	    return get_option( 'wpd_connection_partner_hash', $partner_hash ) ;
     }
 
+	/**
+     * Connect site to HQ
+     *
+	 * @return bool
+	 */
 	public function register_site() {
 
 		if ( $this->is_connected() ) {
-			return;
+			return false;
 		}
 
 		$current_user = wp_get_current_user();
 
 		if ( $current_user === null ) {
-			return;
+			return false;
 		}
 
 		$api_host = defined( 'WPD_WORKER_API_URL' ) ? WPD_WORKER_API_URL : self::API_URL;
@@ -131,24 +136,26 @@ class ExternalHost extends BaseHost {
 
 		// Check for errors
 		if ( is_wp_error( $response ) ) {
-			return;
+			return false;
 		}
 
 		// Get the response data
 		$response_data = wp_remote_retrieve_body( $response );
 
 		if ( empty( $response_data ) ) {
-			return;
+			return false;
 		}
 
 		$response_data = json_decode( $response_data );
 
 		if ( ! is_object( $response_data ) ) {
-			return;
+			return false;
 		}
 
 		$this->setup_connection( $response_data->id );
 		set_transient( 'wpd_connection_status', 'success', 10 );
+
+        return $response_data->id;
 
 	}
 

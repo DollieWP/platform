@@ -41,9 +41,13 @@ class Admin extends Singleton {
 			wp_send_json_error( 'Not allowed!' );
 		}
 
-        $signature = sha1(Plugin::instance()->get_host()->get_token() . Plugin::instance()->get_host()->get_partner_hash());
+		if ( ! get_option( 'wpd_connection_id' ) ) {
+			wp_send_json_error( 'Site is not connected!' );
+		}
 
-		$response = wp_remote_request( HostInterface::API_URL . 'external-sites/' . get_option('wpd_connection_id'), array(
+		$signature = sha1( Plugin::instance()->get_host()->get_token() . Plugin::instance()->get_host()->get_partner_hash() );
+
+		$response = wp_remote_request( HostInterface::API_URL . 'external-sites/' . get_option( 'wpd_connection_id' ), array(
 			'method'  => 'DELETE',
 			'headers' => array(
 				'Authorization' => $signature
@@ -52,12 +56,48 @@ class Admin extends Singleton {
 			'timeout' => 30,
 		) );
 
+        error_log(print_r($response, true));
+
 		if ( ! is_wp_error( $response ) ) {
-			Plugin::instance()->get_host()->remove_connection();
-			wp_send_json_success( 'Successfully removed site!' );
-		} else {
-			wp_send_json_error( $response->get_error_message() );
+			$data = wp_remote_retrieve_body( $response );
+			$data = @json_decode( $data );
+			if ( isset( $data->message ) ) {
+				Plugin::instance()->get_host()->remove_connection();
+				wp_send_json_success( $data->message );
+			}
+			wp_send_json_error( json_encode( $response ) );
 		}
+
+		wp_send_json_error( 'Something went wrong!' );
+		wp_die();
+	}
+
+	public function ajax_callback_connect_site() {
+
+		// Check for nonce security
+		if ( ! wp_verify_nonce( $_POST['nonce'], 'dollie_connect_ajax_nonce' ) ) {
+			wp_send_json_error( 'Not allowed!' );
+		}
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( 'Not allowed!' );
+		}
+
+		if ( ! Plugin::instance()->get_host()->get_partner_hash() ) {
+			wp_send_json_error( 'Partner is not defined!' );
+		}
+
+		$registered = Plugin::instance()->get_host()->register_site();
+
+		if ( $registered ) {
+			wp_send_json_success( [
+				'site' => $registered,
+				'data' => 'Site registered successfully',
+				'token' => Plugin::instance()->get_host()->get_token()
+			] );
+		}
+
+		wp_send_json_error( 'Something went wrong!' );
 		wp_die();
 	}
 
@@ -68,6 +108,7 @@ class Admin extends Singleton {
 	 */
 	public function settings_page_content() {
 		$wpd_token = get_option( 'wpd_token' );
+		$site_hash = get_option( 'wpd_connection_id' );
 		?>
         <div x-data="{
                 isLoading: false,
@@ -75,6 +116,7 @@ class Admin extends Singleton {
                 isError: false,
                 message: '',
                 token: '<?php echo esc_attr( $wpd_token ); ?>',
+                site: '<?php echo esc_attr( $site_hash ); ?>'
                 }" class="max-w-xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
             <div class="bg-gray-700 shadow sm:rounded-lg">
                 <div class="px-4 py-5 sm:px-6">
@@ -83,7 +125,8 @@ class Admin extends Singleton {
                          class="h-12 w-auto">
                     <h2 class="text-lg leading-6 font-medium text-white mt-2">Dollie Connect</h2>
                 </div>
-                <div x-show="token" class="border-t border-gray-200 px-4 py-5 sm:p-0">
+
+                <div x-show="token && site" class="border-t border-gray-200 px-4 py-5 sm:p-0">
                     <dl class="sm:divide-y sm:divide-gray-200">
                         <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                             <dt class="text-sm font-medium text-gray-100">
@@ -101,60 +144,116 @@ class Admin extends Singleton {
 								<?php esc_html_e( 'Remove Site from Control HQ', 'platform' ); ?>
                             </dt>
                             <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                <button x-on:click="
-                                    isLoading = true;
-                                    fetch('<?php echo admin_url( 'admin-ajax.php' ); ?>', {
-                                        method: 'POST',
-                                        body: new FormData(),
-                                        headers: {
-                                            'X-Requested-With': 'XMLHttpRequest'
-                                        },
-                                        body: new URLSearchParams({
-                                            'action': 'dollie_connect_remove_site',
-                                            'nonce': '<?php echo wp_create_nonce( 'dollie_connect_ajax_nonce' ); ?>'
-                                        })
-                                    })
-                                    .then(response =>response.json())
-                                    .then(json=> {
-                                    console.log(json);
-                                        if (json.success) {
-                                            message = json.data;
-                                            token = '';
-                                            isSuccess = true;
-                                        } else {
-                                            // Handle error response
-                                            console.error('Failed to remove site');
-                                            message = json.data ?? 'An error occurred. Please try again!';
-                                        }
-                                        isLoading = false;
-                                    })
-                                    .catch(error => {
-                                        // Handle fetch error
-                                        console.error(error);
-                                        isLoading = false;
-                                        message = 'An error occurred. Please try again!';
-                                    });"
+                                <button
                                         class="bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded"
-                                        x-bind:disabled="isLoading"
+                                        x-bind="RemoveButton"
                                         x-html="isLoading ? `<span class='dashicons dashicons-update spin'></span> Removing Site`: 'Remove Site'"
                                 >
                                     Remove Site
                                 </button>
 
                             </dd>
-                            <div class="bg-gray-600 text-white text-sm font-medium mt-4 p-2 rounded sm:col-span-3"
-                                 x-show="message"
-                                 x-html="message"></div>
                         </div>
                     </dl>
                 </div>
-                <div x-show="!token" class="border-t border-gray-200 px-4 py-5 sm:p-0">
+                <div x-show="!token || ! site" class="border-t border-gray-200 px-4 py-5 sm:p-0">
                     <div class="bg-gray-600 text-white text-sm font-medium p-2 rounded sm:col-span-3">
-                        This site is not yet connected!
+                        <p>Connect your site easily and manage it with ease!</p>
+                        <button
+                                class="bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 mt-4 rounded"
+                                x-bind="ConnectButton"
+                                x-html="isLoading ? `<span class='dashicons dashicons-update spin'></span> Connecting Site`: 'Connect Site'"
+                        >
+                            Connect Site
+                        </button>
                     </div>
                 </div>
             </div>
+            <div class="bg-gray-600 text-white text-sm font-medium mt-4 p-2 rounded sm:col-span-3"
+                 x-show="message"
+                 x-html="message"></div>
         </div>
+        <script>
+          document.addEventListener('alpine:init', () => {
+            Alpine.bind('RemoveButton', () => ({
+              type: 'button',
+
+              '@click'() {
+                this.isLoading = true;
+                fetch('<?php echo admin_url( 'admin-ajax.php' ); ?>', {
+                  method: 'POST',
+                  headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                  },
+                  body: new URLSearchParams({
+                    'action': 'dollie_connect_remove_site',
+                    'nonce': '<?php echo wp_create_nonce( 'dollie_connect_ajax_nonce' ); ?>'
+                  })
+                })
+                  .then(response => response.json())
+                  .then(json => {
+                    if (json.success) {
+                      this.message = json.data;
+                      this.token = '';
+                      this.isSuccess = true;
+                    } else {
+                      // Handle error response
+                      this.message = json.data ?? 'An error occurred. Please try again!';
+                    }
+                    this.isLoading = false;
+                  })
+                  .catch(error => {
+                    // Handle fetch error
+                    this.isLoading = false;
+                    this.message = 'An error occurred. Please try again!';
+                  });
+              },
+
+              ':disabled'() {
+                return this.isLoading
+              },
+            }));
+            Alpine.bind('ConnectButton', () => ({
+              type: 'button',
+
+              '@click'() {
+                this.isLoading = true;
+                fetch('<?php echo admin_url( 'admin-ajax.php' ); ?>', {
+                  method: 'POST',
+                  headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                  },
+                  body: new URLSearchParams({
+                    'action': 'dollie_connect_site',
+                    'nonce': '<?php echo wp_create_nonce( 'dollie_connect_ajax_nonce' ); ?>'
+                  })
+                })
+                  .then(response => response.json())
+                  .then(json => {
+                    if (json.success) {
+                      this.message = json.data.message;
+                      this.token = json.data.token;
+                      this.site = json.data.site;
+                      this.isSuccess = true;
+                    } else {
+                      // Handle error response
+                      this.message = json.data ?? 'An error occurred. Please try again!';
+                    }
+                    this.isLoading = false;
+                  })
+                  .catch(error => {
+                    // Handle fetch error
+                    this.isLoading = false;
+                    this.message = 'An error occurred. Please try again!';
+                  });
+              },
+
+              ':disabled'() {
+                return this.isLoading
+              },
+            }))
+          })
+        </script>
 		<?php
 	}
 
