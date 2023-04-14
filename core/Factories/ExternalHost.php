@@ -91,7 +91,7 @@ class ExternalHost extends BaseHost {
     public function get_partner_hash() {
 	    $partner_hash = '';
 
-	    if ( defined( 'WPD_PARTNER_ID' ) && ! empty( WPD_PARTNER_ID ) ) {
+	    if ( defined( 'WPD_PARTNER_ID' ) && ! empty( WPD_PARTNER_ID ) && strpos(WPD_PARTNER_ID, '[[') === false ) {
             return WPD_PARTNER_ID;
 	    }
 
@@ -154,6 +154,8 @@ class ExternalHost extends BaseHost {
 
 		$this->setup_connection( $response_data->id );
 		set_transient( 'wpd_connection_status', 'success', 10 );
+
+        do_action('wpd_platform/after/register_site');
 
         return $response_data->id;
 

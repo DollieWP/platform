@@ -56,8 +56,6 @@ class Admin extends Singleton {
 			'timeout' => 30,
 		) );
 
-        error_log(print_r($response, true));
-
 		if ( ! is_wp_error( $response ) ) {
 			$data = wp_remote_retrieve_body( $response );
 			$data = @json_decode( $data );
@@ -91,8 +89,8 @@ class Admin extends Singleton {
 
 		if ( $registered ) {
 			wp_send_json_success( [
-				'site' => $registered,
-				'data' => 'Site registered successfully',
+				'site'  => $registered,
+				'data'  => 'Site registered successfully',
 				'token' => Plugin::instance()->get_host()->get_token()
 			] );
 		}
@@ -109,6 +107,7 @@ class Admin extends Singleton {
 	public function settings_page_content() {
 		$wpd_token = get_option( 'wpd_token' );
 		$site_hash = get_option( 'wpd_connection_id' );
+        $image_url = Whitelabel::instance()->get_text('connect_img_url') === 'connect_img_url' ? esc_attr( PLATFORM_PLUGIN_URL . 'assets/img/control-hq.svg' ) : Whitelabel::instance()->get_text('connect_img_url') ;
 		?>
         <div x-data="{
                 isLoading: false,
@@ -120,10 +119,12 @@ class Admin extends Singleton {
                 }" class="max-w-xl mx-auto mt-6 px-4 sm:px-6 lg:px-8">
             <div class="bg-gray-700 shadow sm:rounded-lg">
                 <div class="px-4 py-5 sm:px-6">
-                    <img src="<?php echo esc_attr( PLATFORM_PLUGIN_URL . 'assets/img/control-hq.svg' ); ?>"
+                    <img src="<?php echo esc_attr( $image_url ); ?>"
                          alt="Control HQ"
                          class="h-12 w-auto">
-                    <h2 class="text-lg leading-6 font-medium text-white mt-2">Dollie Connect</h2>
+                    <h2 class="text-lg leading-6 font-medium text-white mt-2">
+						<?php echo esc_html( Whitelabel::instance()->get_text( 'Dollie Connect' ) ); ?>
+                    </h2>
                 </div>
 
                 <div x-show="token && site" class="border-t border-gray-200 px-4 py-5 sm:p-0">
@@ -147,9 +148,9 @@ class Admin extends Singleton {
                                 <button
                                         class="bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded"
                                         x-bind="RemoveButton"
-                                        x-html="isLoading ? `<span class='dashicons dashicons-update spin'></span> Removing Site`: 'Remove Site'"
+                                        x-html="isLoading ? `<span class='dashicons dashicons-update spin'></span> <?php esc_html_e( 'Removing Site', 'platform' ); ?>`: '<?php esc_html_e( 'Remove Site', 'platform' ); ?>'"
                                 >
-                                    Remove Site
+	                                <?php esc_html_e( 'Remove Site', 'platform' ); ?>
                                 </button>
 
                             </dd>
@@ -158,13 +159,15 @@ class Admin extends Singleton {
                 </div>
                 <div x-show="!token || ! site" class="border-t border-gray-200 px-4 py-5 sm:p-0">
                     <div class="bg-gray-600 text-white text-sm font-medium p-2 rounded sm:col-span-3">
-                        <p>Connect your site easily and manage it with ease!</p>
+
+                        <p><?php esc_html_e( 'Connect your site easily and manage it with ease!', 'platform' ); ?></p>
+
                         <button
                                 class="bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 mt-4 rounded"
                                 x-bind="ConnectButton"
-                                x-html="isLoading ? `<span class='dashicons dashicons-update spin'></span> Connecting Site`: 'Connect Site'"
+                                x-html="isLoading ? `<span class='dashicons dashicons-update spin'></span> <?php esc_html_e( 'Connecting Site', 'platform' ); ?>`: '<?php esc_html_e( 'Connect Site', 'platform' ); ?>'"
                         >
-                            Connect Site
+	                        <?php esc_html_e( 'Connect site', 'platform' ); ?>
                         </button>
                     </div>
                 </div>

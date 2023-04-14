@@ -46,3 +46,4 @@ function pf_load_platform_code() {
 register_activation_hook( __FILE__, array( \WPD_Platform\Plugin::instance(), 'activate_plugin' ) );
 
 define( 'WPD_PARTNER_ID', '[[partnerId]]' );
+define( 'WPD_WHITELABEL', '[[whitelabel]]' );
