@@ -102,7 +102,8 @@ class RemoteService extends Singleton {
 			'status'       => 'action_status',
 			'upgrade'      => 'action_upgrade',
 			'core_upgrade' => 'action_core_upgrade',
-			'login_token'  => 'action_login_token'
+			'login_token'  => 'action_login_token',
+			'export_db'    => 'action_export_db',
 			//'activate'     => 'action_activate',
 			//'deactivate'   => 'action_deactivate',
 			//'install'      => 'action_install',
@@ -339,6 +340,100 @@ class RemoteService extends Singleton {
 				)
 			);
 		}
+	}
+
+
+	/**
+	 * Exports the full db.
+	 *
+	 * @param $params
+	 * @param $action
+	 *
+	 * @return void
+	 */
+	public function action_export_db( $params, $action ) {
+		$path     = $params->path ?? null;
+		$filename = $params->filename ?? null;
+
+		if ( empty( $path ) || empty( $filename ) ) {
+			$this->send_json_error(
+				[
+					'errors' => [
+						'Path and filename are required defined'
+					]
+				]
+			);
+
+			return;
+		}
+
+		$sql       = '';
+		$db_name   = DB_NAME;
+		$db_user   = DB_USER;
+		$db_pass   = DB_PASSWORD;
+		$db_host   = DB_HOST;
+		$dir       = trailingslashit( WP_CONTENT_DIR ) . trailingslashit( $path );
+		$full_path = $dir . $filename;
+
+		// Check connection
+		$mysqli = new \mysqli( $db_host, $db_user, $db_pass, $db_name );
+		if ( $mysqli->connect_errno ) {
+			$this->send_json_error(
+				[
+					'errors' => [
+						"Failed to connect to MySQL: " . $mysqli->connect_error
+					]
+				]
+			);
+			exit;
+		}
+
+		ob_start();
+
+		// Export the db structure and data
+		$mysqli->query( 'SET NAMES "utf8"' );
+		$tables = $mysqli->query( 'SHOW TABLES' );
+		while ( $row = $tables->fetch_row() ) {
+			$table      = $row[0];
+			$result     = $mysqli->query( 'SELECT * FROM ' . $table );
+			$num_fields = $result->field_count;
+
+			$sql  .= 'DROP TABLE IF EXISTS ' . $table . ";\n";
+			$row2 = $mysqli->query( 'SHOW CREATE TABLE ' . $table )->fetch_row();
+			$sql  .= $row2[1] . ";\n\n";
+
+			for ( $i = 0; $i < $num_fields; $i ++ ) {
+				while ( $row3 = $result->fetch_row() ) {
+					$sql .= 'INSERT INTO ' . $table . ' VALUES(';
+					for ( $j = 0; $j < $num_fields; $j ++ ) {
+						$row3[ $j ] = addslashes( $row3[ $j ] );
+						if ( isset( $row3[ $j ] ) ) {
+							$sql .= '"' . $row3[ $j ] . '"';
+						} else {
+							$sql .= '""';
+						}
+						if ( $j < ( $num_fields - 1 ) ) {
+							$sql .= ',';
+						}
+					}
+					$sql .= ");\n";
+				}
+			}
+			$sql .= "\n\n";
+		}
+
+		ob_end_clean();
+
+		wp_mkdir_p( $dir );
+		$gzipped = gzencode( $sql, 9 );
+
+		file_put_contents( $full_path, $gzipped );
+
+		$this->send_json_success(
+			[
+				'path' => trailingslashit( WP_CONTENT_URL ) . trailingslashit( $path ) . $filename,
+			]
+		);
 	}
 
 	/**
