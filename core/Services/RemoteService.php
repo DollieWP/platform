@@ -193,7 +193,7 @@ class RemoteService extends Singleton {
 	 *
 	 * @return void
 	 */
-	public function action_status( $params, $action ) {
+	protected function action_status( $params, $action ) {
 		$full = ! empty( $params->full );
 
 		$this->send_json_success(
@@ -209,7 +209,7 @@ class RemoteService extends Singleton {
 	 *
 	 * @return void
 	 */
-	public function action_login_token( $params, $action ) {
+	protected function action_login_token( $params, $action ) {
 		$username = $params->username ?? null;
 		$token    = LoginService::instance()->get_login_token( $username );
 
@@ -233,7 +233,7 @@ class RemoteService extends Singleton {
 		);
 	}
 
-	public function action_upgrade( $params, $action ) {
+	protected function action_upgrade( $params, $action ) {
 
 		$upgraded = [];
 		$errors   = [];
@@ -281,7 +281,7 @@ class RemoteService extends Singleton {
 	 *
 	 * @return string[]
 	 */
-	private function upgrade_call( $item, $type = 'plugin' ) {
+	protected function upgrade_call( $item, $type = 'plugin' ) {
 
 		$pid      = "{$type}:{$item}";
 		$success  = UpdateService::instance()->upgrade( $pid );
@@ -319,7 +319,7 @@ class RemoteService extends Singleton {
 	 * @return void
 	 *
 	 */
-	public function action_core_upgrade( $params, $action ) {
+	protected function action_core_upgrade( $params, $action ) {
 
 		// Upgrade core WP.
 		$success = UpdateService::instance()->upgrade_core();
@@ -351,7 +351,7 @@ class RemoteService extends Singleton {
 	 *
 	 * @return void
 	 */
-	public function action_export_db( $params, $action ) {
+	protected function action_export_db( $params, $action ) {
 		$path     = $params->path ?? null;
 		$filename = $params->filename ?? null;
 
