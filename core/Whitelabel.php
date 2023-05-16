@@ -30,7 +30,7 @@ class Whitelabel extends Singleton {
 	 */
 	public function whitelabel( $plugin_name, $plugin_data ) {
 
-		if ( $plugin_data['Name'] === 'Platform Worker' ) {
+		if ( isset( $plugin_data['Name'] ) && $plugin_data['Name'] === 'Platform Worker' ) {
 			$plugin_name = $this->get_text( 'Platform Worker' );
 		}
 
