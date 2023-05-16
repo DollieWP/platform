@@ -4,6 +4,9 @@
       "WPD_Platform\\": "core/"
     }
   },
+  "require": {
+    "php": ">=7.3"
+  },
   "require-dev": {
     "roave/security-advisories": "dev-latest",
     "wp-cli/wp-cli-bundle": "*"
