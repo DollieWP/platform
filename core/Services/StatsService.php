@@ -183,8 +183,8 @@ class StatsService extends Singleton {
 
 		$wp_core = [];
 
-		if ( $full === true ) {
-			require_once PLATFORM_WORDPRESS_DIR . '/wp-admin/includes/update.php';
+		$update_path = PLATFORM_WORDPRESS_DIR . '/wp-admin/includes/update.php';
+		if ( $full === true && file_exists( $update_path ) ) {
 			$wp_core     = get_core_updates();
 			$site_admins = get_super_admins();
 		} else {
