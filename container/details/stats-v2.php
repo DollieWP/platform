@@ -35,6 +35,6 @@ if ( ! isset( $_GET['full'] ) ) {
 // Force a short-init since we just need core WP, not the entire framework stack
 
 $full      = isset( $_GET['full'] );
-$site_data = \WPD_Platform\Services\StatsService::instance()->get();
+$site_data = \WPD_Platform\Services\StatsService::instance()->get($full);
 
 echo json_encode( $site_data, JSON_PRETTY_PRINT );
