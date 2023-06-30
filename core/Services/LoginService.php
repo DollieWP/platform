@@ -44,8 +44,9 @@ class LoginService extends Singleton {
 
 				// Login as this user
 				wp_clear_auth_cookie();
-				wp_set_current_user( $user->ID, $user->user_login );
-				wp_set_auth_cookie( $user->ID, true, is_ssl() );
+				wp_set_current_user($user->ID, $user->user_login);
+				wp_set_auth_cookie($user->ID);
+				do_action( 'wp_login', $user->ID, $user->user_login, $user );
 
 				if ( is_user_logged_in() ) {
 					if ( $_GET['location'] ) {
