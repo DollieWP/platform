@@ -1,6 +1,6 @@
 {
   "name": "platform",
-  "version": "3.3.0",
+  "version": "3.3.1",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -13,7 +13,7 @@
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/DollieWP/platform/issues"
+    "url": "https://gi3.3.0om/Dol3.3.0platform/issues"
   },
   "homepage": "https://github.com/DollieWP/platform#readme",
   "devDependencies": {

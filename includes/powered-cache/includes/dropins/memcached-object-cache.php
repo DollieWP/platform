@@ -2,8 +2,8 @@
 /**
  * Memcached Redux drop-in, Mika's fork
  *
- * @link https://github.com/skopco/memcached-redux
- * Upstream: 0.1.7
+ * @link https://github.com/poweredcache/memcached-redux
+ * Upstream: 0.2.1
  */
 
 if ( ! defined( 'WP_CACHE_KEY_SALT' ) ) {
@@ -12,10 +12,41 @@ if ( ! defined( 'WP_CACHE_KEY_SALT' ) ) {
 
 if ( class_exists( 'Memcached' ) ):
 
+	/**
+	 * Determines whether the object cache implementation supports a particular feature.
+	 *
+	 * @param string $feature Name of the feature to check for. Possible values include:
+	 *                        'add_multiple', 'set_multiple', 'get_multiple', 'delete_multiple',
+	 *                        'flush_runtime', 'flush_group'.
+	 *
+	 * @return bool True if the feature is supported, false otherwise.
+	 * @since 0.1.9
+	 *
+	 */
+	function wp_cache_supports( $feature ) {
+		switch ( $feature ) {
+			case 'add_multiple':
+			case 'set_multiple':
+			case 'flush_runtime':
+			case 'get_multiple':
+			case 'delete_multiple':
+				return true;
+
+			default:
+				return false;
+		}
+	}
+
 	function wp_cache_add( $key, $data, $group = '', $expire = 0 ) {
 		global $wp_object_cache;
 
 		return $wp_object_cache->add( $key, $data, $group, $expire );
+	}
+
+	function wp_cache_add_multiple( array $data, $group = '', $expire = 0 ) {
+		global $wp_object_cache;
+
+		return $wp_object_cache->add_multiple( $data, $group, $expire );
 	}
 
 	function wp_cache_incr( $key, $n = 1, $group = '' ) {
@@ -42,6 +73,12 @@ if ( class_exists( 'Memcached' ) ):
 		return $wp_object_cache->delete( $key, $group );
 	}
 
+	function wp_cache_delete_multiple( array $keys, $group = '' ) {
+		global $wp_object_cache;
+
+		return $wp_object_cache->delete_multiple( $keys, $group );
+	}
+
 	function wp_cache_flush() {
 		global $wp_object_cache;
 
@@ -52,6 +89,12 @@ if ( class_exists( 'Memcached' ) ):
 		global $wp_object_cache;
 
 		return $wp_object_cache->get( $key, $group, $force, $found );
+	}
+
+	function wp_cache_get_multiple( $keys, $group = '', $force = false ) {
+		global $wp_object_cache;
+
+		return $wp_object_cache->get_multiple( $keys, $group, $force );
 	}
 
 	/**
@@ -66,6 +109,12 @@ if ( class_exists( 'Memcached' ) ):
 		global $wp_object_cache;
 
 		return $wp_object_cache->get_multi( $key_and_groups, $bucket );
+	}
+
+	function wp_cache_set_multiple( array $data, $group = '', $expire = 0 ) {
+		global $wp_object_cache;
+
+		return $wp_object_cache->set_multiple( $data, $group, $expire );
 	}
 
 	/**
@@ -113,6 +162,13 @@ if ( class_exists( 'Memcached' ) ):
 
 		$wp_object_cache->add_non_persistent_groups( $groups );
 	}
+
+	function wp_cache_flush_runtime() {
+		global $wp_object_cache;
+
+		return $wp_object_cache->flush_runtime();
+	}
+
 
 	class WP_Object_Cache {
 		var $global_groups = array();
@@ -164,6 +220,17 @@ if ( class_exists( 'Memcached' ) ):
 			$this->global_groups = array_unique( $this->global_groups );
 		}
 
+		public function add_multiple( array $data, $group = '', $expire = 0 ) {
+			$values = array();
+
+			foreach ( $data as $key => $value ) {
+				$values[ $key ] = $this->add( $key, $value, $group, $expire );
+			}
+
+			return $values;
+		}
+
+
 		function add_non_persistent_groups( $groups ) {
 			if ( ! is_array( $groups ) ) {
 				$groups = (array) $groups;
@@ -193,6 +260,13 @@ if ( class_exists( 'Memcached' ) ):
 			// Silence is Golden.
 		}
 
+		function flush_runtime() {
+			$this->cache     = array();
+			$this->group_ops = array();
+
+			return true;
+		}
+
 		function delete( $id, $group = 'default' ) {
 			$key = $this->key( $id, $group );
 
@@ -213,6 +287,16 @@ if ( class_exists( 'Memcached' ) ):
 			}
 
 			return $result;
+		}
+
+		public function delete_multiple( array $keys, $group = '' ) {
+			$values = array();
+
+			foreach ( $keys as $key ) {
+				$values[ $key ] = $this->delete( $key, $group );
+			}
+
+			return $values;
 		}
 
 		function flush() {
@@ -267,6 +351,16 @@ if ( class_exists( 'Memcached' ) ):
 			}
 
 			return $value;
+		}
+
+		public function get_multiple( $keys, $group = 'default', $force = false) {
+			$values = array();
+
+			foreach ( $keys as $key ) {
+				$values[ $key ] = $this->get( $key, $group, $force );
+			}
+
+			return $values;
 		}
 
 		function get_multi( $keys, $group = 'default' ) {
@@ -363,6 +457,16 @@ if ( class_exists( 'Memcached' ) ):
 			$result = $mc->set( $key, $data, $expire );
 
 			return $result;
+		}
+
+		public function set_multiple( array $data, $group = '', $expire = 0 ) {
+			$values = array();
+
+			foreach ( $data as $key => $value ) {
+				$values[ $key ] = $this->set( $key, $value, $group, $expire );
+			}
+
+			return $values;
 		}
 
 		function set_multi( $items, $expire = 0, $group = 'default' ) {

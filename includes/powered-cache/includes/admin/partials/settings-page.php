@@ -455,27 +455,54 @@ $settings = \PoweredCache\Utils\get_settings();
 						</div>
 					</div>
 
-					<!-- Accepted query strings -->
+					<!-- Cache query strings -->
 					<div class="sui-box-settings-row">
 						<div class="sui-box-settings-col-1">
-							<span class="sui-settings-label"><?php esc_html_e( 'Accepted query strings', 'powered-cache' ); ?></span>
+							<span class="sui-settings-label"><?php esc_html_e( 'Cache Query Strings', 'powered-cache' ); ?></span>
 						</div>
 						<div class="sui-box-settings-col-2">
 							<div class="sui-row">
 								<div class="sui-col-md-8">
 									<div class="sui-form-field">
-										<label for="accepted_query_strings" class="sui-label"><i><?php esc_html_e( 'Enter allowed query parameter (one per line)', 'powered-cache' ); ?></i></label>
+										<label for="cache_query_strings" class="sui-label"><i><?php esc_html_e( 'Enter query strings for cache (one per line)', 'powered-cache' ); ?></i></label>
+										<textarea
+												id="cache_query_strings"
+												name="cache_query_strings"
+												class="sui-form-control"
+												aria-describedby="cache_query_strings_description"
+												rows="5"
+										><?php echo esc_textarea( $settings['cache_query_strings'] ); ?></textarea>
+										<span id="cache_query_strings_description" class="sui-description">
+											<?php esc_html_e( 'Powered Cache will create seperate caching file for the value of these query strings.', 'powered-cache' ); ?>
+											(<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'cache-query-strings' ) ); ?>" target="_blank">?</a>)
+										</span>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Ignored query strings -->
+					<div class="sui-box-settings-row">
+						<div class="sui-box-settings-col-1">
+							<span class="sui-settings-label"><?php esc_html_e( 'Ignored Query Strings', 'powered-cache' ); ?></span>
+						</div>
+						<div class="sui-box-settings-col-2">
+							<div class="sui-row">
+								<div class="sui-col-md-8">
+									<div class="sui-form-field">
+										<label for="ignored_query_strings" class="sui-label"><i><?php esc_html_e( 'Enter allowed query parameter (one per line)', 'powered-cache' ); ?></i></label>
 										<textarea
 												placeholder="utm_"
-												id="accepted_query_strings"
-												name="accepted_query_strings"
+												id="ignored_query_strings"
+												name="ignored_query_strings"
 												class="sui-form-control"
-												aria-describedby="accepted_query_strings_description"
+												aria-describedby="ignored_query_strings_description"
 												rows="5"
-										><?php echo esc_textarea( $settings['accepted_query_strings'] ); ?></textarea>
-										<span id="accepted_query_strings_description" class="sui-description">
+										><?php echo esc_textarea( $settings['ignored_query_strings'] ); ?></textarea>
+										<span id="ignored_query_strings_description" class="sui-description">
 											<?php esc_html_e( 'Powered Cache will ignore these query string and serve the standard cache file. Tracking parameters such as utm_* ignored by default.', 'powered-cache' ); ?>
-											(<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'accepted-query-strings' ) ); ?>" target="_blank">?</a>)
+											(<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'ignored-query-strings' ) ); ?>" target="_blank">?</a>)
 										</span>
 									</div>
 								</div>
@@ -599,7 +626,23 @@ $settings = \PoweredCache\Utils\get_settings();
 											<?php esc_html_e( 'Ensure text remains visible during webfont load.', 'powered-cache' ); ?>
 										</span>
 									</label>
+									<br>
 								</div>
+							</div>
+							<div class="sui-form-field">
+								<label for="use_bunny_fonts" class="sui-toggle">
+									<input type="checkbox"
+									       value="1"
+									       name="use_bunny_fonts"
+									       id="use_bunny_fonts"
+										<?php checked( 1, $settings['use_bunny_fonts'] ); ?>
+									>
+									<span class="sui-toggle-slider" aria-hidden="true"></span>
+									<span id="use_bunny_fonts_label" class="sui-toggle-label"><?php esc_html_e( 'Use Bunny Fonts', 'powered-cache' ); ?></span>
+									<span id="use_bunny_fonts_description" class="sui-description">
+										<?php esc_html_e( 'Use Bunny Fonts as drop-in replacement for Google Fonts', 'powered-cache' ); ?>
+									</span>
+								</label>
 							</div>
 
 
@@ -674,6 +717,7 @@ $settings = \PoweredCache\Utils\get_settings();
 						<div class="<?php echo esc_attr( apply_filters( 'powered_cache_admin_page_fo_critical_css_classes', 'sui-box-settings-row ' ) ); ?> <?php echo( ! is_premium() ? 'sui-disabled' : '' ); ?>">
 							<div class="sui-box-settings-col-1">
 								<span class="sui-settings-label"><?php esc_html_e( 'Critical CSS', 'powered-cache' ); ?>
+									(<a href="<?php echo esc_url( get_doc_url( '/critical-css/' ) ); ?>" target="_blank">?</a>)
 									<?php if ( ! is_premium() ) : ?>
 										<span class="sui-tag sui-tag-pro"><?php esc_html_e( 'Premium', 'powered-cache' ); ?></span>
 									<?php endif; ?>
@@ -779,6 +823,78 @@ $settings = \PoweredCache\Utils\get_settings();
 					</div>
 
 
+					<!-- Unused CSS -->
+					<div class="<?php echo esc_attr( apply_filters( 'powered_cache_admin_page_fo_ucss_classes', 'sui-box-settings-row ' ) ); ?> <?php echo( ! is_premium() ? 'sui-disabled' : '' ); ?>">
+						<div class="sui-box-settings-col-1">
+							<span class="sui-settings-label"><?php esc_html_e( 'Unused CSS', 'powered-cache' ); ?>
+								(<a href="<?php echo esc_url( get_doc_url( '/remove-unused-css/' ) ); ?>" target="_blank">?</a>)
+								<?php if ( ! is_premium() ) : ?>
+									<span class="sui-tag sui-tag-pro"><?php esc_html_e( 'Premium', 'powered-cache' ); ?></span>
+								<?php endif; ?>
+							</span>
+							<span class="sui-description"><?php esc_html_e( 'Remove Unused CSS', 'powered-cache' ); ?></span>
+						</div>
+
+						<div class="sui-box-settings-col-2">
+							<div class="sui-form-field">
+								<label for="remove_unused_css" class="sui-toggle">
+									<input
+										type="checkbox"
+										id="remove_unused_css"
+										name="remove_unused_css"
+										aria-labelledby="remove_unused_css_label"
+										aria-controls="remove_unused_css_safelist"
+										value="1"
+										<?php checked( 1, $settings['remove_unused_css'] ); ?>
+									>
+									<span class="sui-toggle-slider" aria-hidden="true"></span>
+									<span id="remove_unused_css_label" class="sui-toggle-label"><?php esc_html_e( 'Remove Unused CSS' ); ?></span>
+									<span id="remove_unused_css_description" class="sui-description"><?php esc_html_e( 'It reduces page size by removing all CSS and stylesheets that are not used while keeping only the used CSS.', 'powered-cache' ); ?></span>
+								</label>
+							</div>
+
+							<div style=" <?php echo( ! $settings['remove_unused_css'] ? 'display:none' : '' ); ?>" tabindex="0" id="remove_unused_css_safelist">
+								<div class="sui-row">
+									<div class="sui-col-md-8">
+										<div class="sui-form-field">
+											<label for="ucss_safelist" class="sui-label"><i><?php esc_html_e( 'Safelist', 'powered-cache' ); ?></i></label>
+											<textarea
+												id="ucss_safelist"
+												name="ucss_safelist"
+												class="sui-form-control"
+												aria-labelledby="label-unique-id"
+												aria-describedby="ucss_safelist_description"
+												rows="5"
+											><?php echo  esc_textarea( $settings['ucss_safelist'] ); // phpcs:ignore ?></textarea>
+											<span id="ucss_safelist_description" class="sui-description">
+												<?php esc_html_e( 'Specify CSS selectors that should not be removed. (one per line)', 'powered-cache' ); ?>
+											</span>
+										</div>
+									</div>
+								</div>
+								<div class="sui-row">
+									<div class="sui-col-md-8">
+										<div class="sui-form-field">
+											<label for="ucss_excluded_files" class="sui-label"><i><?php esc_html_e( 'Excluded files', 'powered-cache' ); ?></i></label>
+											<textarea
+												id="ucss_excluded_files"
+												name="ucss_excluded_files"
+												class="sui-form-control"
+												aria-labelledby="label-unique-id"
+												aria-describedby="ucss_excluded_files_description"
+												rows="5"
+											><?php echo  esc_textarea( $settings['ucss_excluded_files'] ); // phpcs:ignore ?></textarea>
+											<span id="ucss_excluded_files_description" class="sui-description">
+												<?php esc_html_e( 'Specify CSS files that should be ignored during the UCSS generation process.  (one per line)', 'powered-cache' ); ?>
+											</span>
+										</div>
+									</div>
+								</div>
+							</div>
+
+						</div>
+					</div>
+
 
 					<!-- JS Files -->
 					<div class="<?php echo esc_attr( apply_filters( 'powered_cache_admin_page_fo_js_classes', 'sui-box-settings-row ' ) ); ?>">
@@ -847,7 +963,10 @@ $settings = \PoweredCache\Utils\get_settings();
 
 					<div class="<?php echo esc_attr( apply_filters( 'powered_cache_admin_page_fo_js_classes', 'sui-box-settings-row ' ) ); ?>">
 						<div class="sui-box-settings-col-1">
-							<span class="sui-settings-label" id="js_execution_method_label"><?php esc_html_e( 'JavaScript execution method', 'powered-cache' ); ?></span>
+							<span class="sui-settings-label" id="js_execution_method_label">
+								<?php esc_html_e( 'JavaScript Execution', 'powered-cache' ); ?>
+								(<a href="<?php echo esc_url( get_doc_url( '/js-execution/' ) ); ?>" target="_blank">?</a>)
+							</span>
 							<span class="sui-description"></span>
 						</div>
 						<div class="sui-box-settings-col-2">

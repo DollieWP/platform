@@ -59,12 +59,14 @@ function get_settings( $force_network_wide = false ) {
 		'rejected_cookies'               => '',
 		'vary_cookies'                   => '',
 		'rejected_uri'                   => '',
-		'accepted_query_strings'         => '',
+		'ignored_query_strings'          => '',
+		'cache_query_strings'            => '',
 		'purge_additional_pages'         => '',
 		// file optimization
 		'minify_html'                    => false,
 		'combine_google_fonts'           => false,
 		'swap_google_fonts_display'      => true,
+		'use_bunny_fonts'                => false,
 		'minify_css'                     => false,
 		'combine_css'                    => false,
 		'critical_css'                   => false,
@@ -73,6 +75,9 @@ function get_settings( $force_network_wide = false ) {
 		'critical_css_appended_content'  => '',
 		'critical_css_fallback'          => '',
 		'excluded_css_files'             => '',
+		'remove_unused_css'              => false,
+		'ucss_safelist'                  => '',
+		'ucss_excluded_files'            => '',
 		'minify_js'                      => false,
 		'combine_js'                     => false,
 		'excluded_js_files'              => '',
@@ -353,6 +358,7 @@ function js_execution_methods() {
 		'blocking' => esc_html__( 'Blocking – (default)', 'powered-cache' ),
 		'async'    => esc_html__( 'Non-blocking using async', 'powered-cache' ),
 		'defer'    => esc_html__( 'Non-blocking using defer', 'powered-cache' ),
+		'delayed'  => esc_html__( 'Delayed for user interaction', 'powered-cache' ),
 	];
 
 	/**
@@ -1325,4 +1331,18 @@ function is_local_site() {
 	$is_local = apply_filters( 'powered_cache_is_local_site', $is_local );
 
 	return $is_local;
+}
+
+/**
+ * Check whether request for bypass or process normally
+ *
+ * @return bool
+ * @since 3.0
+ */
+function bypass_request() {
+	if ( isset( $_GET['nopoweredcache'] ) && $_GET['nopoweredcache'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		return true;
+	}
+
+	return false;
 }

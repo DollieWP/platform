@@ -7,6 +7,7 @@
 
 namespace PoweredCache;
 
+use PoweredCache\Dependencies\voku\helper\HtmlMin;
 use const PoweredCache\Constants\POST_META_DISABLE_CSS_OPTIMIZATION;
 use const PoweredCache\Constants\POST_META_DISABLE_JS_OPTIMIZATION;
 use PoweredCache\Optimizer\CSS;
@@ -115,7 +116,7 @@ class FileOptimizer {
 		add_filter( 'script_loader_tag', [ $this, 'js_minify' ], 10, 3 );
 		add_filter( 'style_loader_tag', [ $this, 'css_minify' ], 10, 4 );
 		add_filter( 'powered_cache_fo_script_loader_tag', [ $this, 'change_js_execute_method' ] );
-		add_action( 'after_setup_theme', [ $this, 'html_minify' ] );
+		add_action( 'after_setup_theme', [ $this, 'process_buffer' ], 999 );
 		add_action( 'template_redirect', [ $this, 'maybe_suppress_optimizations' ] );
 
 		if ( ! $this->settings['combine_js'] ) {
@@ -135,6 +136,62 @@ class FileOptimizer {
 		}
 	}
 
+	/**
+	 * Process output buffer
+	 *
+	 * @return void
+	 */
+	public function process_buffer() {
+		if ( strpos( $_SERVER['REQUEST_URI'], 'robots.txt' ) !== false || strpos( $_SERVER['REQUEST_URI'], '.htaccess' ) !== false ) {
+			return;
+		}
+
+		if ( ! isset( $_SERVER['REQUEST_METHOD'] ) || 'GET' !== $_SERVER['REQUEST_METHOD'] ) {
+			return;
+		}
+
+		$file_extension = $_SERVER['REQUEST_URI'];
+		$file_extension = preg_replace( '#^(.*?)\?.*$#', '$1', $file_extension );
+		$file_extension = trim( preg_replace( '#^.*\.(.*)$#', '$1', $file_extension ) );
+
+		if ( ! preg_match( '#index\.php$#i', $_SERVER['REQUEST_URI'] ) && in_array( $file_extension, array( 'php', 'xml', 'xsl' ), true ) ) {
+			return;
+		}
+
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			return;
+		}
+
+		ob_start( [ $this, 'maybe_delay_scripts' ] );
+		ob_start( [ $this, 'maybe_replace_google_fonts_with_bunny_fonts' ] );
+		ob_start( [ $this, 'maybe_minify_html' ] );
+	}
+
+	/**
+	 * Replace Google Fonts with Bunny drop-in replacement's
+	 *
+	 * @param string $html Output buffer
+	 *
+	 * @return array|mixed|string|string[]
+	 * @since 3.0
+	 */
+	public function maybe_replace_google_fonts_with_bunny_fonts( $html ) {
+		if ( ! $this->settings['use_bunny_fonts'] ) {
+			return $html;
+		}
+
+		$html = str_replace(
+			[
+				'https://fonts.googleapis.com',
+				'http://fonts.googleapis.com',
+				'//fonts.googleapis.com',
+			],
+			'https://fonts.bunny.net',
+			$html
+		);
+
+		return $html;
+	}
 
 	/**
 	 * Maybe suppress optimizations based on the post meta options
@@ -170,11 +227,19 @@ class FileOptimizer {
 	}
 
 	/**
-	 * Minify HTML output
+	 * Minify given HTML output
+	 *
+	 * @param string $buffer HTML
+	 *
+	 * @return string|string[]|null
 	 */
-	public function html_minify() {
+	public function maybe_minify_html( $buffer ) {
 		if ( ! $this->settings['minify_html'] ) {
-			return;
+			return $buffer;
+		}
+
+		if ( false === stripos( $buffer, '<html' ) && false === stripos( $buffer, '<!DOCTYPE html' ) ) {
+			return $buffer;
 		}
 
 		/**
@@ -188,29 +253,12 @@ class FileOptimizer {
 		 * @since  2.0
 		 */
 		if ( apply_filters( 'powered_cache_fo_disable_html_minify', false ) ) {
-			return;
+			return $buffer;
 		}
 
-		ob_start( [ $this, 'run_html_minify' ] );
-	}
-
-	/**
-	 * Minify given HTML output
-	 *
-	 * @param string $buffer HTML
-	 *
-	 * @return string|string[]|null
-	 */
-	public function run_html_minify( $buffer ) {
-		$search = array(
-			'/\>[^\S ]+/s',  // strip whitespaces after tags, except space
-			'/[^\S ]+\</s',  // strip whitespaces before tags, except space
-			'/(\s)+/s',       // shorten multiple whitespace sequences
-			'/^\\s+|\\s+$/',       // shorten multiple whitespace sequences
-		);
-
-		$replace = array( '>', '<', '\\1', ' ' );
-		$buffer  = preg_replace( $search, $replace, $buffer );
+		$html_min = new HtmlMin();
+		$html_min->overwriteSpecialScriptTags( [ 'x-tmpl-mustache', 'text/template' ] );
+		$buffer = $html_min->minify( $buffer );
 
 		return $buffer;
 	}
@@ -230,6 +278,11 @@ class FileOptimizer {
 		}
 
 		if ( 'blocking' === $js_execution ) {
+			return $tag;
+		}
+
+		// @since 3.0 - rewrite dom for delayed option
+		if ( 'delayed' === $js_execution ) {
 			return $tag;
 		}
 
@@ -457,7 +510,7 @@ class FileOptimizer {
 
 				$style_src = $wp_styles->registered[ $handle ]->src;
 
-				if ( false !== strpos( $style_src, 'fonts.googleapis.com/css' ) ) {
+				if ( false !== strpos( $style_src, 'fonts.googleapis.com/css' ) || false !== strpos( $style_src, 'fonts.bunny.net/css' ) ) {
 					$url = wp_parse_url( $style_src );
 
 					if ( is_string( $url['query'] ) ) {
@@ -537,7 +590,7 @@ class FileOptimizer {
 					 *
 					 * @param  {string} $font_display font display attribute.
 					 *
-					 * @return {boolean} New value.
+					 * @return {string} New value.
 					 * @since  2.0
 					 */
 					$font_display = apply_filters( 'powered_cache_fo_google_font_display', $font_display );
@@ -546,7 +599,19 @@ class FileOptimizer {
 						$font_args['display'] = $font_display;
 					}
 
-					$src = esc_url_raw( add_query_arg( $font_args, $google_fonts_domain ) );
+					/**
+					 * Filters google font's domain
+					 *
+					 * @hook   powered_cache_fo_google_fonts_domain
+					 *
+					 * @param  {string} $font_display font display attribute.
+					 *
+					 * @return {string} New value.
+					 * @since  3.0
+					 */
+					$fonts_domain = apply_filters( 'powered_cache_fo_google_fonts_domain', $google_fonts_domain );
+
+					$src = esc_url_raw( add_query_arg( $font_args, $fonts_domain ) );
 
 					// Enqueue google fonts into one URL request
 					wp_enqueue_style( // phpcs:ignore WordPress.WP.EnqueuedResourceParameters.MissingVersion
@@ -560,5 +625,97 @@ class FileOptimizer {
 			}
 		}
 	}
+
+	/**
+	 * DelayedJS execution
+	 * Similar logic with image lazy-loading but this time for scripts.
+	 *
+	 * @param string $html HTML Buffer
+	 *
+	 * @return string
+	 * @since 3.0
+	 */
+	public function maybe_delay_scripts( $html ) {
+		if ( 'delayed' !== $this->settings['js_execution_method'] ) {
+			return $html;
+		}
+
+		$pattern = '/<script([^>]*)>(.*?)<\/script>/si';
+
+		preg_match_all( $pattern, $html, $matches, PREG_SET_ORDER );
+
+		if ( empty( $matches ) ) {
+			return $html;
+		}
+
+		$delayed_script_count = 0;
+
+		foreach ( $matches as $match ) {
+			$script     = $match[0];
+			$attributes = $match[1];
+			$content    = $match[2];
+
+			// when it's enabled for optimized scripts only
+			if ( $this->settings['js_execution_optimized_only'] && false === strpos( $script, 'file-optimizer.php' ) ) {
+				continue;
+			}
+
+			$is_delay_skipped = function_exists( 'is_user_logged_in' ) && is_user_logged_in();
+
+			/**
+			 * Whether skip or not skip js for delay
+			 *
+			 * @hook   powered_cache_delayed_js_skip
+			 *
+			 * @param  {bool} Depends on logged-in status by default.
+			 *
+			 * @return {bool} New value.
+			 * @since  3.0
+			 */
+			if ( apply_filters( 'powered_cache_delayed_js_skip', $is_delay_skipped, $script, $attributes, $content ) ) {
+				continue;
+			}
+
+			if ( strpos( $script, 'type=' ) === false || strpos( $script, "type='text/javascript'" ) !== false ) {
+				$new_script = $script;
+
+				// Check if script has a src attribute
+				if ( strpos( $attributes, 'src=' ) !== false ) {
+					$new_script = preg_replace( "/src=[\"\']([^\"\']*)[\"\']/", 'data-src="$1"', $new_script );
+					$new_script = preg_replace( '/<script([^>]*)>/', '<script data-type="lazy"$1>', $new_script );
+				} else {
+					$new_content = 'data:text/javascript;base64,' . base64_encode( $content ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+					$new_script  = preg_replace( '/<script([^>]*)>/', "<script data-src=\"$new_content\" data-type=\"lazy\"$1>", $new_script ); // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
+					$new_script  = preg_replace( '/<script([^>]*)>(.*?)<\/script>/si', '<script data-type="lazy"$1></script>', $new_script );
+				}
+
+				$html = str_replace( $script, $new_script, $html );
+				$delayed_script_count ++;
+			}
+		}
+
+		if ( 0 === $delayed_script_count ) {
+			return $html;
+		}
+
+		/**
+		 * Filter delay time for JS execution fallback
+		 *
+		 * @hook   powered_cache_delayed_js_timeout
+		 *
+		 * @param  {int} $delay_in_ms Delay time in microsecond
+		 *
+		 * @return {int} New value.
+		 * @since  3.0
+		 */
+		$delay_timeout = apply_filters( 'powered_cache_delayed_js_timeout', 5000 );
+
+		$html .= '<script id="powered-cache-delayed-js">';
+		$html .= 'const scriptLoader={loadDelay:' . absint( $delay_timeout ) . ',loadTimer:null,userInteractionEvents:["mouseover","click","keydown","wheel","touchmove","touchstart"],init(){for(const e of this.userInteractionEvents)window.addEventListener(e,this.triggerLoader,{passive:!0});this.loadTimer=setTimeout(this.loadScripts,this.loadDelay)},triggerLoader(){scriptLoader.loadScripts(),clearTimeout(scriptLoader.loadTimer);for(const e of scriptLoader.userInteractionEvents)window.removeEventListener(e,scriptLoader.triggerLoader,{passive:!0})},loadScripts(){document.querySelectorAll("script[data-type=\'lazy\']").forEach((e=>{e.setAttribute("src",e.getAttribute("data-src"))})),console.log("Script(s) loaded with delay")}};scriptLoader.init();';
+		$html .= '</script>';
+
+		return $html;
+	}
+
 
 }

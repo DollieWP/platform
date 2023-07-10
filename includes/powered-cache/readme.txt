@@ -1,13 +1,13 @@
 === Powered Cache – Caching and Optimization for WordPress – Easily Improve PageSpeed & Web Vitals Score ===
-Contributors:  poweredcache, skopco, m_uysl
+Contributors:  poweredcache, wphandle, m_uysl
 Tags: cache, caching, web vitals, performance, fastest, page speed, optimization, cdn, object cache, minify, powered cache
 Requires at least:  5.7
-Tested up to:  6.1
-Stable tag:  2.5.2
+Tested up to:  6.2
+Stable tag:  3.0.5
 License: GPLv2 (or later)
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 Donate link: https://poweredcache.com/donate/
-Requires PHP: 5.6
+Requires PHP: 7.2.5
 
 The most powerful caching and performance suite for WordPress. Easily Improve PageSpeed & Web Vitals Score.
 
@@ -73,6 +73,7 @@ __Facebook Tracking__: Powered Cache will host Facebook scripts on your server t
 Here is a list of the amazing features included in Powered Cache Premium:
 
 - Critical CSS & Load CSS Asynchronously.
+- Remove Unused CSS. Intelligently scans your pages to identify and remove any CSS rules that aren't being used.
 - Image Optimizer. On the fly Image Compression and WebP conversion.
 - Sitemap Preloading.
 - Scheduled Database cleanups.
@@ -150,7 +151,7 @@ You can disable caching from the meta box in the post editing page or enter page
 Yes, you can find export/import options in the "Misc" sections of the settings page.
 
 = Does it cache API requests? =
-Yes, it caches GET requests on API. If you have query parameters on the request, you will need to allow query parameter in the"Accepted query strings" under the "Advanced Options" section.
+Yes, it caches GET requests on API. If you have query parameters on the request, you will need to allow query parameter in the"Cache query strings" under the "Advanced Options" section.
 
 = Is it compatible with PHP 8+ =
 Yes, it’s compatible with PHP 8+
@@ -168,6 +169,55 @@ Yes, it’s compatible with PHP 8+
 
 
 == Changelog ==
+
+= 3.0.5 (May 30, 2023) =
+- Fix: PhastPress cache purge callback
+- Fix: Memcached drop-in `set_multiple` warning
+- ensure html tag exists before running HTML minifier
+
+= 3.0.4 (May 25, 2023) =
+- DelayedJS bugfix
+- Added new compatibility with PhastPress
+
+= 3.0.3 (May 22, 2023) =
+- Fix: Html Minification bugfix
+
+= 3.0.2 (May 21, 2023) =
+- Fix: Html Minification error below PHP 8.1
+- Added: x-cache-enabled and age headers
+- Added: sorting for cache query strings
+- nginx configuration tweaking
+
+= 3.0.1 (May 16, 2023) =
+- Fix: Malformed robots.txt due to FileOptimizer
+- Fix: Don't execute lazyload script as delayed.
+- Adding clarity to the JS execution field.
+
+= 3.0 (May 15, 2023) =
+- Added: Bunny Fonts as replacement of Google Fonts
+- Added: global `nopoweredcache` parameter to skip optimizations
+- Added: Cache query strings to generate seperate cache based on query and value
+- Added: WooCommerce compat for geolocation with page cache support.
+- Added: Delayed JS execution.
+- Added: Remove Unused CSS feature.
+- Added: New HTML minification library.
+- Updated: Background processing library.
+- Bump required PHP version to 7.2
+- Object cache drop-in updates: supporting *multiple and wp_cache_supports
+- Refactored: Accepted query strings renamed as ignored query strings.
+- Various small improvements and fixes.
+
+= 2.5.4 (March 23, 2023) =
+- Hotfix: HTML minification quotes issue.
+
+= 2.5.3 (March 23, 2023) =
+- Added: Purge site cache on multisite when the site updated. (eg: archived etc...)
+- Improvements: HTML minification.
+- Improvements: Set file optimizer default cache header.
+- Fix: Close icon on diagnostic modal
+- Fix: Blank space on CDN hostname(s)
+- Fix: WP Ultimo compatibility. (checking Mercator more strictly)
+- Tested with WP 6.2
 
 = 2.5.2 (January 20, 2023) =
 - Fix: revert subdirectory deletion with `delete_page_cache()`

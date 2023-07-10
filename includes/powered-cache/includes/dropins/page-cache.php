@@ -47,6 +47,12 @@ if ( ! $GLOBALS['powered_cache_options']['enable_page_cache'] ) {
 	return;
 }
 
+if ( isset( $_GET['nopoweredcache'] ) && $_GET['nopoweredcache'] ) {
+	powered_cache_add_cache_miss_header( "Passing nopoweredcache with the query" );
+
+	return;
+}
+
 // Don't cache page with these user agents
 if ( isset( $powered_cache_rejected_user_agents ) && ! empty( $powered_cache_rejected_user_agents ) ) {
 	$rejected_user_agents = implode( '|', $powered_cache_rejected_user_agents );
@@ -140,14 +146,18 @@ if ( ! empty( $powered_cache_rejected_uri ) ) {
 
 
 if ( ! empty( $_GET ) ) {
-	if ( ! isset( $powered_cache_accepted_query_strings ) ) {
-		$powered_cache_accepted_query_strings = [];
+	if ( ! isset( $powered_cache_ignored_query_strings ) ) {
+		$powered_cache_ignored_query_strings = [];
 	}
 
-	$query_params = array_diff_key( $_GET, array_flip( $powered_cache_accepted_query_strings ) );
+	$query_params = array_diff_key( $_GET, array_flip( $powered_cache_ignored_query_strings ) );
+
+	if ( ! isset( $powered_cache_cache_query_strings ) ) {
+		$powered_cache_cache_query_strings = [];
+	}
 
 	// don't cache when there is not allowed query parameter exists
-	if ( ! empty( $query_params ) ) {
+	if ( ! empty( $query_params ) && ! array_intersect_key( $_GET, array_flip( $powered_cache_cache_query_strings ) ) ) {
 		powered_cache_add_cache_miss_header( "Disallowed query parameter exists" );
 
 		return;
@@ -434,6 +444,8 @@ function powered_cache_serve_cache() {
 		}
 
 		header( 'X-Powered-Cache: PHP' );
+		header( 'X-Cache-Enabled: true' );
+		header( sprintf( "age: %d",  time() - filemtime( $file_path ) ) );
 
 		if ( function_exists( 'gzencode' ) && $GLOBALS['powered_cache_options']['gzip_compression'] ) {
 			header( 'Content-Encoding: gzip' );
@@ -487,7 +499,7 @@ function powered_cache_get_user_cookie() {
  * @since 1.0
  */
 function powered_cache_index_file( $content_type = 'text/html' ) {
-	global $powered_cache_mobile_browsers, $powered_cache_mobile_prefixes, $powered_cache_vary_cookies;
+	global $powered_cache_mobile_browsers, $powered_cache_mobile_prefixes, $powered_cache_vary_cookies, $powered_cache_cache_query_strings;
 
 	$file_name = 'index';
 
@@ -550,6 +562,24 @@ function powered_cache_index_file( $content_type = 'text/html' ) {
 
 	}
 
+	// change filename for provided cache query string
+	if ( ! empty( $_SERVER['QUERY_STRING'] ) ) {
+		parse_str( $_SERVER['QUERY_STRING'], $query_string );
+		$qs_variable = '';
+		sort( $powered_cache_cache_query_strings );
+		foreach ( $powered_cache_cache_query_strings as $query_parameter ) {
+			if ( isset( $query_string[ $query_parameter ] ) ) {
+				$qs_variable .= '_' . $query_parameter;
+				$qs_variable .= is_array( $query_string[ $query_parameter ] ) ? implode( '|', $query_string[ $query_parameter ] ) : $query_string[ $query_parameter ];
+			}
+		}
+
+		if ( ! empty( $qs_variable ) ) {
+			$qs_variable = 'query_' . $qs_variable;
+			$file_name   .= '_' . sha1( $qs_variable );
+		}
+	}
+
 
 	/**
 	 * Content-Type is not always text/html (like feed, wp-json etc..)
@@ -559,6 +589,7 @@ function powered_cache_index_file( $content_type = 'text/html' ) {
 	if ( false === strpos( $content_type, 'text/html' ) ) {
 		$file_name .= '-' . substr( sha1( $content_type ), 0, 6 );
 	}
+
 
 	$file_name .= '.html';
 

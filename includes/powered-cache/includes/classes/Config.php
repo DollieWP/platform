@@ -513,7 +513,8 @@ class Config {
 		$config_file_string .= '$powered_cache_rejected_cookies = ' . var_export( AdvancedCache::get_rejected_cookies(), true ) . ';' . PHP_EOL;
 		$config_file_string .= '$powered_cache_vary_cookies = ' . var_export( AdvancedCache::get_vary_cookies(), true ) . ';' . PHP_EOL;
 		$config_file_string .= '$powered_cache_rejected_uri = ' . var_export( AdvancedCache::get_rejected_uri(), true ) . ';' . PHP_EOL;
-		$config_file_string .= '$powered_cache_accepted_query_strings = ' . var_export( AdvancedCache::get_accepted_query_strings(), true ) . ';' . PHP_EOL;
+		$config_file_string .= '$powered_cache_ignored_query_strings = ' . var_export( AdvancedCache::get_ignored_query_strings(), true ) . ';' . PHP_EOL;
+		$config_file_string .= '$powered_cache_cache_query_strings = ' . var_export( AdvancedCache::get_cache_query_string(), true ) . ';' . PHP_EOL;
 
 		if ( permalink_structure_has_trailingslash() ) {
 			$config_file_string .= '$powered_cache_slash_check = true;' . PHP_EOL;
@@ -585,7 +586,7 @@ class Config {
 		 * Documented in htaccess config
 		 */
 		if ( apply_filters( 'powered_cache_browser_cache', true ) ) {
-			$contents .= 'location ~* .(jpg|jpeg|png|gif|ico|css|js|svg|eot|woff|woff2|ttf|otf)$ {' . PHP_EOL;
+			$contents .= 'location ~* .(js|jpg|jpeg|gif|png|css|tgz|gz|rar|bz2|doc|pdf|ppt|tar|wav|bmp|rtf|swf|ico|flv|txt|woff|woff2|svg|webp|avif)$ {' . PHP_EOL;
 			$contents .= '  expires 6M;' . PHP_EOL;
 			$contents .= '}' . PHP_EOL . PHP_EOL;
 		}
@@ -604,7 +605,7 @@ class Config {
 		$rejected_user_agents = (array) AdvancedCache::get_rejected_user_agents();
 
 		$contents .= '# Don\'t use the cache for rejected agents' . PHP_EOL;
-		$contents .= 'if ($http_user_agent ~* "(' . implode( '|', $rejected_user_agents ) . '")) {' . PHP_EOL;
+		$contents .= 'if ($http_user_agent ~* "(' . implode( '|', $rejected_user_agents ) . ')") {' . PHP_EOL;
 		$contents .= '  set $cache_uri \'null cache\';' . PHP_EOL;
 		$contents .= '}' . PHP_EOL . PHP_EOL;
 

@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Platform Worker
  * Description: This plugin powers our management platform.
- * Version: 3.3.0
+ * Version: 3.3.1
  * Text Domain: platform
  * Domain Path: /languages/
  */

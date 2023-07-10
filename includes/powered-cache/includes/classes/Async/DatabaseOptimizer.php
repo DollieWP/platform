@@ -10,6 +10,10 @@ namespace PoweredCache\Async;
 use const PoweredCache\Constants\DB_CLEANUP_COUNT_CACHE_KEY;
 use \Powered_Cache_WP_Background_Process as Powered_Cache_WP_Background_Process;
 
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery
+// phpcs:disable WordPress.DB.DirectDatabaseQuery.NoCaching
+
+
 /**
  * Class DatabaseOptimizer
  */
@@ -229,7 +233,7 @@ class DatabaseOptimizer extends Powered_Cache_WP_Background_Process {
 			if ( $cancelled >= $max_attempt ) {
 				break;
 			}
-			parent::cancel_process();
+			parent::cancel();
 			$cancelled ++;
 		}
 	}

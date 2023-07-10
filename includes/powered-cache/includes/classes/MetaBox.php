@@ -9,10 +9,12 @@ namespace PoweredCache;
 
 use const PoweredCache\Constants\POST_META_DISABLE_CSS_OPTIMIZATION;
 use const PoweredCache\Constants\POST_META_DISABLE_JS_OPTIMIZATION;
+use const PoweredCache\Constants\POST_META_DISABLE_UCSS_KEY;
 use const PoweredCache\Constants\POST_META_SPECIFIC_CRITICAL_CSS_KEY;
 use const PoweredCache\Constants\POST_META_DISABLE_CACHE_KEY;
 use const PoweredCache\Constants\POST_META_DISABLE_CRITICAL_CSS_KEY;
 use const PoweredCache\Constants\POST_META_DISABLE_LAZYLOAD_KEY;
+use const PoweredCache\Constants\POST_META_SPECIFIC_UCSS_KEY;
 
 /**
  * Class MetaBox
@@ -93,6 +95,31 @@ class MetaBox {
 			$back_compat                = false;
 		}
 
+		$settings = \PoweredCache\Utils\get_settings();
+
+		$required_meta_settings = [
+			'enable_page_cache',
+			'enable_lazy_load',
+			'minify_css',
+			'combine_css',
+			'minify_js',
+			'combine_js',
+			'critical_css',
+			'remove_unused_css',
+		];
+
+		$show_meta_box = false;
+		foreach ( $required_meta_settings as $setting_item ) {
+			if ( $settings[ $setting_item ] ) {
+				$show_meta_box = true;
+				break;
+			}
+		}
+
+		if ( ! $show_meta_box ) {
+			return;
+		}
+
 		add_meta_box(
 			'powered_cache_post_meta',
 			esc_html__( 'Powered Cache', 'powered-cache' ),
@@ -116,9 +143,6 @@ class MetaBox {
 		$settings          = \PoweredCache\Utils\get_settings();
 		$is_cache_disabled = (bool) get_post_meta( $post->ID, POST_META_DISABLE_CACHE_KEY, true );
 
-		if ( ! $settings['enable_page_cache'] && ! $settings['enable_lazy_load'] ) {
-			return; // nothing to control post specific
-		}
 		?>
 		<div id="powered-cache-meta-box">
 			<?php wp_nonce_field( 'powered_cache_post_meta', 'powered_cache_post_meta_nonce' ); ?>
@@ -168,6 +192,22 @@ class MetaBox {
 					<legend class="screen-reader-text"><?php esc_html_e( 'Generate specific Critical CSS', 'powered-cache' ); ?></legend>
 					<input <?php disabled( $disable_critical, true ); ?> <?php checked( $generate_post_specific_critical, true ); ?> type="checkbox" id="<?php echo esc_attr( POST_META_SPECIFIC_CRITICAL_CSS_KEY ); ?>" name="<?php echo esc_attr( POST_META_SPECIFIC_CRITICAL_CSS_KEY ); ?>" value="1">
 					<label for="<?php echo esc_attr( POST_META_SPECIFIC_CRITICAL_CSS_KEY ); ?>"><?php esc_html_e( 'Generate specific Critical CSS', 'powered-cache' ); ?></label>
+				</fieldset>
+			<?php endif; ?>
+
+			<?php if ( $settings['remove_unused_css'] ) : ?>
+				<?php $disable_ucss = (bool) get_post_meta( $post->ID, POST_META_DISABLE_UCSS_KEY, true ); ?>
+				<?php $generate_post_specific_ucss = (bool) get_post_meta( $post->ID, POST_META_SPECIFIC_UCSS_KEY, true ); ?>
+				<fieldset>
+					<legend class="screen-reader-text"><?php esc_html_e( 'Disable UCSS on this post', 'powered-cache' ); ?></legend>
+					<input <?php disabled( $generate_post_specific_ucss, true ); ?> <?php checked( $disable_ucss, true ); ?> type="checkbox" id="<?php echo esc_attr( POST_META_DISABLE_UCSS_KEY ); ?>" name="<?php echo esc_attr( POST_META_DISABLE_UCSS_KEY ); ?>" value="1">
+					<label for="<?php echo esc_attr( POST_META_DISABLE_UCSS_KEY ); ?>"><?php esc_html_e( 'Disable UCSS on this post', 'powered-cache' ); ?></label>
+				</fieldset>
+
+				<fieldset>
+					<legend class="screen-reader-text"><?php esc_html_e( 'Generate specific UCSS', 'powered-cache' ); ?></legend>
+					<input <?php disabled( $disable_ucss, true ); ?> <?php checked( $generate_post_specific_ucss, true ); ?> type="checkbox" id="<?php echo esc_attr( POST_META_SPECIFIC_UCSS_KEY ); ?>" name="<?php echo esc_attr( POST_META_SPECIFIC_UCSS_KEY ); ?>" value="1">
+					<label for="<?php echo esc_attr( POST_META_SPECIFIC_UCSS_KEY ); ?>"><?php esc_html_e( 'Generate specific UCSS', 'powered-cache' ); ?></label>
 				</fieldset>
 			<?php endif; ?>
 
@@ -231,6 +271,36 @@ class MetaBox {
 				register_post_meta(
 					$post_type,
 					POST_META_SPECIFIC_CRITICAL_CSS_KEY,
+					[
+						'show_in_rest'  => true,
+						'single'        => true,
+						'default'       => false,
+						'type'          => 'boolean',
+						'auth_callback' => function () {
+							return current_user_can( 'edit_others_posts' );
+						},
+					]
+				);
+			}
+
+			if ( $settings['remove_unused_css'] ) {
+				register_post_meta(
+					$post_type,
+					POST_META_DISABLE_UCSS_KEY,
+					[
+						'show_in_rest'  => true,
+						'single'        => true,
+						'default'       => false,
+						'type'          => 'boolean',
+						'auth_callback' => function () {
+							return current_user_can( 'edit_others_posts' );
+						},
+					]
+				);
+
+				register_post_meta(
+					$post_type,
+					POST_META_SPECIFIC_UCSS_KEY,
 					[
 						'show_in_rest'  => true,
 						'single'        => true,
@@ -340,6 +410,8 @@ class MetaBox {
 			POST_META_DISABLE_LAZYLOAD_KEY,
 			POST_META_DISABLE_CRITICAL_CSS_KEY,
 			POST_META_SPECIFIC_CRITICAL_CSS_KEY,
+			POST_META_DISABLE_UCSS_KEY,
+			POST_META_SPECIFIC_UCSS_KEY,
 			POST_META_DISABLE_CSS_OPTIMIZATION,
 			POST_META_DISABLE_JS_OPTIMIZATION,
 		];

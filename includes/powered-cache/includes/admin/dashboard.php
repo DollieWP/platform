@@ -69,7 +69,7 @@ function setup() {
  * @see https://wpmudev.github.io/shared-ui/installation/
  */
 function add_sui_admin_body_class( $classes ) {
-	$classes .= ' sui-2-12-13 ';
+	$classes .= ' sui-2-12-18 ';
 
 	return $classes;
 }
@@ -275,17 +275,22 @@ function sanitize_options( $options ) {
 	$sanitized_options['rejected_cookies']              = sanitize_textarea_field( $options['rejected_cookies'] );
 	$sanitized_options['vary_cookies']                  = sanitize_textarea_field( $options['vary_cookies'] );
 	$sanitized_options['rejected_uri']                  = sanitize_textarea_field( $options['rejected_uri'] );
-	$sanitized_options['accepted_query_strings']        = sanitize_textarea_field( $options['accepted_query_strings'] );
+	$sanitized_options['cache_query_strings']           = sanitize_textarea_field( $options['cache_query_strings'] );
+	$sanitized_options['ignored_query_strings']         = sanitize_textarea_field( $options['ignored_query_strings'] );
 	$sanitized_options['purge_additional_pages']        = sanitize_textarea_field( $options['purge_additional_pages'] );
 	$sanitized_options['minify_html']                   = ! empty( $options['minify_html'] );
 	$sanitized_options['combine_google_fonts']          = ! empty( $options['combine_google_fonts'] );
 	$sanitized_options['swap_google_fonts_display']     = ! empty( $options['swap_google_fonts_display'] );
+	$sanitized_options['use_bunny_fonts']               = ! empty( $options['use_bunny_fonts'] );
 	$sanitized_options['minify_css']                    = ! empty( $options['minify_css'] );
 	$sanitized_options['combine_css']                   = ! empty( $options['combine_css'] );
 	$sanitized_options['critical_css']                  = ! empty( $options['critical_css'] );
 	$sanitized_options['critical_css_additional_files'] = sanitize_textarea_field( $options['critical_css_additional_files'] );
 	$sanitized_options['critical_css_excluded_files']   = sanitize_textarea_field( $options['critical_css_excluded_files'] );
 	$sanitized_options['excluded_css_files']            = sanitize_textarea_field( $options['excluded_css_files'] );
+	$sanitized_options['remove_unused_css']             = ! empty( $options['remove_unused_css'] );
+	$sanitized_options['ucss_safelist']                 = sanitize_textarea_field( $options['ucss_safelist'] );
+	$sanitized_options['ucss_excluded_files']           = sanitize_textarea_field( $options['ucss_excluded_files'] );
 	$sanitized_options['minify_js']                     = ! empty( $options['minify_js'] );
 	$sanitized_options['combine_js']                    = ! empty( $options['combine_js'] );
 	$sanitized_options['excluded_js_files']             = sanitize_textarea_field( $options['excluded_js_files'] );
@@ -322,6 +327,7 @@ function sanitize_options( $options ) {
 	$cdn_hostname = [];
 	if ( isset( $options['cdn_hostname'] ) ) {
 		foreach ( (array) $options['cdn_hostname'] as $hostname ) {
+			$hostname = trim( $hostname );
 			if ( filter_var( $hostname, FILTER_VALIDATE_URL ) ) {
 				$cdn_hostname[] = wp_parse_url( $hostname, PHP_URL_HOST );
 			} else {
@@ -466,6 +472,8 @@ function maybe_display_message() {
 		'start_preload'              => esc_html__( 'The cache preloading has been initialized!', 'powered-cache' ),
 		'generate_critical'          => esc_html__( 'The Critical CSS generation process has been initialized!', 'powered-cache' ),
 		'generate_critical_network'  => esc_html__( 'The Critical CSS generation process has been initialized for all sites! This might take a while, depending on the network size.', 'powered-cache' ),
+		'generate_ucss'              => esc_html__( 'The UCSS generation process has been initialized!', 'powered-cache' ),
+		'generate_ucss_network'      => esc_html__( 'The UCSS generation process has been initialized for all sites! This might take a while, depending on the network size.', 'powered-cache' ),
 		'flush_cf_cache'             => esc_html__( 'Cloudflare cache flushed, it can take up to 30 seconds to delete all cache from Cloudflare!', 'powered-cache' ),
 		'reset_settings'             => esc_html__( 'Settings have been reset!', 'powered-cache' ),
 		'import_settings'            => esc_html__( 'Settings have been imported!', 'powered-cache' ),
@@ -485,7 +493,9 @@ function maybe_display_message() {
 		'flush_all_cache_err_permission'          => esc_html__( 'You don\'t have permission to perform this action!', 'powered-cache' ),
 		'start_preload_err_permission'            => esc_html__( 'You don\'t have permission to perform this action!', 'powered-cache' ),
 		'start_critical_err_permission'           => esc_html__( 'You don\'t have permission to perform this action!', 'powered-cache' ),
+		'start_ucss_err_permission'               => esc_html__( 'You don\'t have permission to perform this action!', 'powered-cache' ),
 		'start_critical_err_license'              => esc_html__( 'Your license key does not seem valid. A valid license is required for the Critical CSS!', 'powered-cache' ),
+		'start_ucss_err_license'                  => esc_html__( 'Your license key does not seem valid. A valid license is required for removing unused CSS!', 'powered-cache' ),
 		'flush_cf_cache_failed'                   => esc_html__( 'Could not flush Cloudflare cache. Please make sure you entered the correct credentials and zone id!', 'powered-cache' ),
 	];
 

@@ -5,6 +5,7 @@ namespace WPD_Platform;
 use WPD_Platform\Factories\ExternalHost;
 use WPD_Platform\Factories\InternalHost;
 use \WP_CLI;
+use YahnisElsts\PluginUpdateChecker\v5\PucFactory;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -95,6 +96,18 @@ final class Plugin {
 		require $this->plugin_dir . 'setup/misc.php';
 
 		new Authentication();
+
+		// Custom plugin updates only when installed as plugin on external site.
+		if ( ! $this->is_wpmu() && $this->get_host()->is_type_external()
+		     && file_exists( $this->plugin_dir . 'includes/plugin-update-checker/plugin-update-checker.php' ) ) {
+
+			require $this->plugin_dir . 'includes/plugin-update-checker/plugin-update-checker.php';
+			PucFactory::buildUpdateChecker(
+				'https://control.getdollie.com/releases/?action=get_metadata&slug=platform',
+				PLATFORM_PLUGIN_FILE, // Full path to the main plugin file or functions.php.
+				'platform'
+			);
+		}
 
 		// Check if we should disable update checks
 		if ( ! defined( 'OSDWPUVERSION' ) && file_exists( $this->plugin_dir . 'includes/disable-wordpress-updates/disable-updates.php' ) && get_option( 'dollie_disable_updates' )
