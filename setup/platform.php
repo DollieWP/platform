@@ -410,7 +410,7 @@ add_action( 'admin_notices', 'pf_show_platform_cache_notice' );
 
 function pf_show_platform_cache_notice() {
 	if ( ! function_exists( 'is_plugin_active' ) ) {
-		include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+		include_once ABSPATH . 'wp-admin/includes/plugin.php';
 	}
 
 	$incompatible_plugin = false;

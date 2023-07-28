@@ -193,7 +193,7 @@ final class Plugin {
 			return false;
 		}
 		if ( ! function_exists( 'is_plugin_active' ) ) {
-			include_once( ABSPATH . 'wp-admin/includes/plugin.php' );
+			include_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
 
 		$load_platform_cache = true;
@@ -215,7 +215,7 @@ final class Plugin {
 			'check-and-enable-gzip-compression' => 'check-and-enable-gzip-compression/richards-toolbox.php',
 		);
 
-		foreach ( $plugins as $plugin => $file ) {
+		foreach ( $plugins as $file ) {
 			if ( is_plugin_active( $file ) ) {
 				$load_platform_cache = false;
 				break;
