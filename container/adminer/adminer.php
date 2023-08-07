@@ -72,8 +72,8 @@ header("Set-Cookie: $E=".urlencode($Y).($Ad?"; expires=".gmdate("D, d M Y H:i:s"
 restart_session(){if(!ini_bool("session.use_cookies"))session_start();}function
 stop_session($zc=false){$kh=ini_bool("session.use_cookies");if(!$kh||$zc){session_write_close();if($kh&&@ini_set("session.use_cookies",false)===false)session_start();}}function&get_session($z){return$_SESSION[$z][DRIVER][SERVER][$_GET["username"]];}function
 set_session($z,$X){$_SESSION[$z][DRIVER][SERVER][$_GET["username"]]=$X;}function
-auth_url($qh,$O,$V,$i=null){global$Kb;preg_match('~([^?]*)\??(.*)~',remove_from_uri(implode("|",array_keys($Kb))."|username|".($i!==null?"db|":"").session_name()),$C);return"$C[1]?".(sid()?SID."&":"").($qh!="server"||$O!=""?urlencode($qh)."=".urlencode($O)."&":"")."username=".urlencode($V).($i!=""?"&db=".urlencode($i):"").($C[2]?"&$C[2]":"");}function
-is_ajax(){return($_SERVER["HTTP_X_REQUESTED_WITH"]=="XMLHttpRequest");}function
+auth_url($qh,$O,$V,$i=null){global$Kb;preg_match('~([^?]*)\??(.*)~',remove_from_uri(implode("|",array_keys($Kb))."|username|".($i!==null?"db|":"").session_name()),$C);return"$C[1]?".(sid()?SID."&":"").($qh!="server"||$O!=""?urlencode($qh)."=".urlencode($O)."&":"")."username=".urlencode($V).($i!=""?"&db=".urlencode($i):"").($C[2]?"&$C[2]":"");}if (! function_exists('is_ajax')){ function
+is_ajax(){return($_SERVER["HTTP_X_REQUESTED_WITH"]=="XMLHttpRequest");}}function
 redirect($B,$D=null){if($D!==null){restart_session();$_SESSION["messages"][preg_replace('~^[^?]*~','',($B!==null?$B:$_SERVER["REQUEST_URI"]))][]=$D;}if($B!==null){if($B=="")$B=".";header("Location: $B");exit;}}function
 query_redirect($I,$B,$D,$pf=true,$jc=true,$qc=false,$Dg=""){global$e,$k,$b;if($jc){$eg=microtime(true);$qc=!$e->query($I);$Dg=format_time($eg);}$ag="";if($I)$ag=$b->messageQuery($I,$Dg,$qc);if($qc){$k=error().$ag.script("messagesPrint();");return
 false;}if($pf)redirect($B,$D.$ag);return
