@@ -14,7 +14,7 @@ class StatsService extends Singleton {
 	 */
 	public function get( $full = false ) {
 
-		// Include the now instantiated global $wpdb Class for use
+		// Include the now instantiated global $wpdb Class for use.
 		global $wpdb;
 		$wpdb->hide_errors();
 
@@ -29,13 +29,13 @@ class StatsService extends Singleton {
 		 * Get users with administrator role
 		 */
 		$sql_admin = "
-    SELECT ID, display_name
-    FROM {$wpdb->users} INNER JOIN {$wpdb->usermeta}
-    ON {$wpdb->users}.ID = {$wpdb->usermeta}.user_id
-    WHERE {$wpdb->usermeta}.meta_key = '{$wpdb->prefix}capabilities'
-    AND {$wpdb->usermeta}.meta_value LIKE '%administrator%'
-    ORDER BY {$wpdb->users}.ID
-";
+            SELECT ID, display_name
+            FROM {$wpdb->users} INNER JOIN {$wpdb->usermeta}
+            ON {$wpdb->users}.ID = {$wpdb->usermeta}.user_id
+            WHERE {$wpdb->usermeta}.meta_key = '{$wpdb->prefix}capabilities'
+            AND {$wpdb->usermeta}.meta_value LIKE '%administrator%'
+            ORDER BY {$wpdb->users}.ID
+        ";
 
 		$admin_user_ids = $wpdb->get_col( $sql_admin );
 		$admin_user     = null;
@@ -48,13 +48,13 @@ class StatsService extends Singleton {
 		 * Get user with editor role
 		 */
 		$sql_editor = "
-    SELECT ID, display_name
-    FROM {$wpdb->users} INNER JOIN {$wpdb->usermeta}
-    ON {$wpdb->users}.ID = {$wpdb->usermeta}.user_id
-    WHERE {$wpdb->usermeta}.meta_key = '{$wpdb->prefix}capabilities'
-    AND {$wpdb->usermeta}.meta_value LIKE '%editor%'
-    ORDER BY {$wpdb->users}.ID
-";
+            SELECT ID, display_name
+            FROM {$wpdb->users} INNER JOIN {$wpdb->usermeta}
+            ON {$wpdb->users}.ID = {$wpdb->usermeta}.user_id
+            WHERE {$wpdb->usermeta}.meta_key = '{$wpdb->prefix}capabilities'
+            AND {$wpdb->usermeta}.meta_value LIKE '%editor%'
+            ORDER BY {$wpdb->users}.ID
+        ";
 
 		$editor_user_ids = $wpdb->get_col( $sql_editor );
 		$editor_user     = null;
@@ -63,42 +63,62 @@ class StatsService extends Singleton {
 			$editor_user = $wpdb->get_results( "SELECT user_login, user_email FROM $wpdb->users WHERE id = $editor_user_ids[0]" );
 		}
 
+		$all_roles = wp_roles()->roles;
+		$users_by_role = [];
+
+		foreach ( $all_roles as $role_key => $role_info ) {
+			$users = get_users([
+				'role' => $role_key,
+				'number' => 1,
+			]);
+
+			if ( ! empty( $users ) ) {
+				$users_by_role[ $role_key ] = [
+					'username' => $users[0]->user_login,
+					'email' => $users[0]->email,
+				];
+			}
+		}
+
+
 		/**
 		 * Plugins
 		 */
 
-		$plugins_updates = 0;
-		$plugins         = [];
+		$plugins_updates      = 0;
+		$plugins              = [];
+		$plugins_auto_updates = (array) get_site_option( 'auto_update_plugins', array() );
 
 		if ( $full === true ) {
-
 			if ( ! function_exists( 'get_plugin_updates' ) ) {
 				require_once ABSPATH . 'wp-admin/includes/update.php';
 			}
+
 			wp_update_plugins();
 
 			$plugins_update = get_site_transient( 'update_plugins' );
 			$plugins_active = get_option( 'active_plugins' );
 
-			foreach ( get_plugins() as $k => $plugin ) {
-				$path   = explode( '/', $k );
+			foreach ( get_plugins() as $full_path => $plugin ) {
+				$path   = explode( '/', $full_path );
 				$slug   = $path[0];
 				$update = false;
 
-				if ( isset( $plugins_update->response[ $k ] ) ) {
+				if ( isset( $plugins_update->response[ $full_path ] ) ) {
 					$plugins_updates ++;
 					$update = true;
 				}
 
 				$plugins[] = [
-					'name'    => $plugin['Name'],
-					'slug'    => $slug,
-					'loader'  => $k,
-					'active'  => in_array( $k, $plugins_active ),
-					'update'  => $update,
-					'version' => $plugin['Version'],
-					'author'  => $plugin['Author'],
-					'uri'     => $plugin['PluginURI'],
+					'name'        => $plugin['Name'],
+					'slug'        => $slug,
+					'loader'      => $full_path,
+					'active'      => in_array( $full_path, $plugins_active, true ),
+					'update'      => $update,
+					'auto_update' => in_array( $full_path, $plugins_auto_updates, true ),
+					'version'     => $plugin['Version'],
+					'author'      => $plugin['Author'],
+					'uri'         => $plugin['PluginURI'],
 				];
 			}
 		}
@@ -107,12 +127,12 @@ class StatsService extends Singleton {
 		 * Themes
 		 */
 
-		$themes_updates = 0;
-		$themes         = [];
-		$active_theme   = [];
+		$themes_updates      = 0;
+		$themes              = [];
+		$active_theme        = [];
+		$themes_auto_updates = (array) get_site_option( 'auto_update_themes', array() );
 
 		if ( $full === true ) {
-
 			wp_update_themes();
 
 			$theme_data = wp_get_theme();
@@ -130,19 +150,20 @@ class StatsService extends Singleton {
 
 			$themes_update = get_site_transient( 'update_themes' );
 
-			foreach ( wp_get_themes() as $theme ) {
+			foreach ( wp_get_themes() as $slug => $theme ) {
 				if ( isset( $themes_update->response[ $theme->get_stylesheet() ] ) ) {
 					$themes_updates ++;
 				}
 
 				$themes[] = [
-					'name'    => $theme->get( 'Name' ),
-					'slug'    => $theme->get_template(),
-					'active'  => get_option( 'template' ) === $theme->get_template(),
-					'update'  => isset( $themes_update->response[ $theme->get_stylesheet() ] ),
-					'version' => $theme->get( 'Version' ),
-					'author'  => $theme->get( 'Author' ),
-					'uri'     => $theme->get( 'ThemeURI' ),
+					'name'        => $theme->get( 'Name' ),
+					'slug'        => $slug,
+					'active'      => get_option( 'template' ) === $theme->get_template(),
+					'update'      => isset( $themes_update->response[ $theme->get_stylesheet() ] ),
+					'auto_update' => in_array( $slug, $themes_auto_updates, true ),
+					'version'     => $theme->get( 'Version' ),
+					'author'      => $theme->get( 'Author' ),
+					'uri'         => $theme->get( 'ThemeURI' ),
 				];
 			}
 		}
@@ -184,12 +205,14 @@ class StatsService extends Singleton {
 		$wp_core = [];
 
 		$update_path = PLATFORM_WORDPRESS_DIR . '/wp-admin/includes/update.php';
+
 		if ( $full === true && file_exists( $update_path ) ) {
 			$wp_core     = get_core_updates();
 			$site_admins = get_super_admins();
 		} else {
 			$site_admins = false;
 		}
+
 		global $wp_version;
 
 		/**
@@ -219,6 +242,7 @@ class StatsService extends Singleton {
 					'username' => $editor_user && isset( $editor_user[0] ) ? $editor_user[0]->user_login : '',
 					'email'    => $editor_user && isset( $editor_user[0] ) ? $editor_user[0]->user_email : '',
 				],
+				'roles' => $users_by_role,
 				'other_admins' => get_super_admins(),
 				'multisite'    => is_multisite(),
 				'wp_version'   => $wp_version,
