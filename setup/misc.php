@@ -19,10 +19,10 @@ add_action(
 add_filter( 'pre_comment_content', 'pf_die_on_long_comment', 9999 );
 function pf_die_on_long_comment( $text ) {
 	if ( strlen( $text ) > 13000 ) {
-	    /** @noinspection ForgottenDebugOutputInspection */
-	    wp_die(
-            'This comment is longer than the maximum allowed size and has been dropped.',
-            'Comment Declined',
+		/** @noinspection ForgottenDebugOutputInspection */
+		wp_die(
+			'This comment is longer than the maximum allowed size and has been dropped.',
+			'Comment Declined',
 			array( 'response' => 413 )
 		);
 	}

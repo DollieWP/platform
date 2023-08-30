@@ -15,14 +15,14 @@ if ( ! defined( 'WP_DEBUG_DISPLAY' ) ) {
 function wpd_platform_base_dir() {
 	$path = dirname( __FILE__ );
 	while ( true ) {
-		if ( file_exists( $path . "/wp-config.php" ) ) {
-			return $path . "/";
+		if ( file_exists( $path . '/wp-config.php' ) ) {
+			return $path . '/';
 		}
 		$path = dirname( $path );
 	}
 }
 
-// Require the wp-load.php file (which loads wp-config.php and bootstraps WordPress)
+// Require the wp-load.php file (which loads wp-config.php and bootstraps WordPress).
 require wpd_platform_base_dir() . '/wp-load.php';
 
 if ( ! isset( $_GET['full'] ) ) {
@@ -32,9 +32,6 @@ if ( ! isset( $_GET['full'] ) ) {
 // Restrict access to page.
 \WPD_Platform\Plugin::instance()->get_host()->base_access();
 
-// Force a short-init since we just need core WP, not the entire framework stack
-
-$full      = isset( $_GET['full'] );
-$site_data = \WPD_Platform\Services\StatsService::instance()->get($full);
+$site_data = \WPD_Platform\Services\StatsService::instance()->get( isset( $_GET['full'] ) );
 
 echo json_encode( $site_data, JSON_PRETTY_PRINT );

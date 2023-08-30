@@ -3,14 +3,13 @@
  * Hide our platform plugins from the Plugin Dashboard
  *
  * @since 1.0.0
- *
  */
 function pf_hide_core_plugins() {
 	global $wp_list_table;
-	$hidearr   = array(
-		//'sar-friendly-smtp/sar-friendly-smtp.php',
-		//'platform-dashboard/platform-dashboard.php'
-		//'worker/init.php',
+	$hidearr = array(
+		// 'sar-friendly-smtp/sar-friendly-smtp.php',
+		// 'platform-dashboard/platform-dashboard.php'
+		// 'worker/init.php',
 	);
 	$myplugins = $wp_list_table->items;
 	foreach ( $myplugins as $key => $val ) {
@@ -24,7 +23,7 @@ add_action( 'pre_current_active_plugins', 'pf_hide_core_plugins' );
 
 
 class PFSameSiteCookieSetter {
-	static private $_is_browser_compatible = array();
+	private static $_is_browser_compatible = array();
 
 	/*
 	   * sets cookie
@@ -33,7 +32,7 @@ class PFSameSiteCookieSetter {
 	   * supported $option keys: expires, path, domain, secure, httponly and samesite
 	   * possible $option[samesite] values: None, Lax or Strict
 	   */
-	public static function setcookie( $name, $value = "", $options = array() ) {
+	public static function setcookie( $name, $value = '', $options = array() ) {
 		$same_site  = isset( $options['samesite'] ) ? $options['samesite'] : '';
 		$is_secure  = isset( $options['secure'] ) ? boolval( $options['secure'] ) : false;
 		$user_agent = isset( $_SERVER['HTTP_USER_AGENT'] ) ? $_SERVER['HTTP_USER_AGENT'] : '';
@@ -189,17 +188,17 @@ function pf_community_restore_notice() {
 	global $current_user;
 	if ( current_user_can( 'manage_options' ) && get_option( 'platform_restore_notice' ) === 'yes' ) {
 		?>
-        <div class="notice platform-notice">
-            <script type="text/javascript">
-                jQuery(document).ready(function () {
-                    swal("Your Site was succesfully restored!", "When you see this message it means your site was successfully restored.", "success")
-                });
-            </script>
-            <h2>Your Site was succesfully restored!</h2>
-            <p>When you see this message it means your site was successfully restored.
-                <br>
-            </p>
-        </div>
+		<div class="notice platform-notice">
+			<script type="text/javascript">
+				jQuery(document).ready(function () {
+					swal("Your Site was succesfully restored!", "When you see this message it means your site was successfully restored.", "success")
+				});
+			</script>
+			<h2>Your Site was succesfully restored!</h2>
+			<p>When you see this message it means your site was successfully restored.
+				<br>
+			</p>
+		</div>
 		<?php
 		update_option( 'platform_restore_notice', '' );
 	}
@@ -226,18 +225,18 @@ function pf_migration_notice() {
 	if ( current_user_can( 'manage_options' ) && is_plugin_active( 'migrate-guru/migrateguru.php' ) && $is_dollie && ! get_option( 'platform_migration_notice' ) ) {
 		activate_plugin( 'dollie/loader.php' );
 		?>
-        <div class="notice platform-notice">
-            <script type="text/javascript">
-                jQuery(function () {
-                    swal("You Have Copied Your Site to Dollie Cloud!", "You can now start working on your platform without touching your live site! Please reload this page to continue setting up your Hub.", "success")
-                });
-            </script>
-            <h2>You Have Copied Your Site to Dollie Cloud!</h2>
-            <p>You can now start working on your platform without touching your live site! Please reload this page to
-                continue setting up your Hub.
-                <br>
-            </p>
-        </div>
+		<div class="notice platform-notice">
+			<script type="text/javascript">
+				jQuery(function () {
+					swal("You Have Copied Your Site to Dollie Cloud!", "You can now start working on your platform without touching your live site! Please reload this page to continue setting up your Hub.", "success")
+				});
+			</script>
+			<h2>You Have Copied Your Site to Dollie Cloud!</h2>
+			<p>You can now start working on your platform without touching your live site! Please reload this page to
+				continue setting up your Hub.
+				<br>
+			</p>
+		</div>
 		<?php
 		update_option( 'platform_migration_notice', 'done' );
 	}
@@ -252,7 +251,7 @@ function pf_notice_styles() {
 		! get_option( 'platform_community_cache_notice' ) ||
 		! get_option( 'platform_rocket_notice' )
 	) {
-		$css = "
+		$css = '
     .platform-notice {
       padding: 20px 20px 40px;
       color: #fff;
@@ -319,7 +318,7 @@ function pf_notice_styles() {
       text-transform: uppercase;
       text-decoration: none;
     }
-  ";
+  ';
 		wp_add_inline_style( 'wp-admin', $css );
 	}
 }
@@ -328,7 +327,6 @@ add_action( 'admin_init', 'pf_notice_styles' );
 
 /**
  * Save last login activity for admins.
- *
  */
 function pf_last_login_activity( $user_login, $user ) {
 
@@ -342,25 +340,29 @@ add_action( 'wp_login', 'pf_last_login_activity', 10, 2 );
 $site_url = "$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 if ( strpos( $site_url, 'dollie.io' ) ) {
 	add_filter( 'admin_email_check_interval', '__return_false' );
-	//Disable plugin auto-update email notification
+	// Disable plugin auto-update email notification
 	add_filter( 'auto_plugin_update_send_email', '__return_false' );
 
-	//Disable theme auto-update email notification
+	// Disable theme auto-update email notification
 	add_filter( 'auto_theme_update_send_email', '__return_false' );
 }
 
 function pf_code_editor_access() {
 	if ( current_user_can( 'manage_options' ) ) {
-		PFSameSiteCookieSetter::setcookie( 'wordpress_allow_code_editor', 'yes', array(
-			'path'     => '/',
-			'httponly' => false,
-			'secure'   => true,
-			'samesite' => 'None'
-		) );
+		PFSameSiteCookieSetter::setcookie(
+			'wordpress_allow_code_editor',
+			'yes',
+			array(
+				'path'     => '/',
+				'httponly' => false,
+				'secure'   => true,
+				'samesite' => 'None',
+			)
+		);
 	}
 
-	$plugin_cache                      = get_option( 'powered_cache_settings' );
-	$plugin_cache['gzip_compression']  = 1;
+	$plugin_cache                     = get_option( 'powered_cache_settings' );
+	$plugin_cache['gzip_compression'] = 1;
 	// $plugin_cache['enable_page_cache'] = 1;
 	update_option( 'powered_cache_settings', $plugin_cache );
 
@@ -383,7 +385,7 @@ function pf_replace_strings( $translated ) {
 		'Powered Cache'                 => 'Caching',
 		'PoweredCache'                  => 'Caching',
 		'Limit Login Attempts Reloaded' => 'Login Security',
-		'Login Security'                => 'Login Security'
+		'Login Security'                => 'Login Security',
 	);
 	$translated = str_ireplace( array_keys( $words ), $words, $translated );
 
@@ -392,19 +394,21 @@ function pf_replace_strings( $translated ) {
 
 
 add_action( 'admin_head', 'pf_custom_css' );
-function pf_custom_css() { ?>
-    <style>
-        .toplevel_page_powered-cache #extension-varnish,
-        .toplevel_page_powered-cache #extension-ga,
-        .toplevel_page_powered-cache #extension-fb-pixel,
-        .toplevel_page_powered-cache .sui-footer,
-        .toplevel_page_powered-cache footer, #llar-header-upgrade-message,
-        .dashboard-section-1 .info-box-3,
-        #llar-apps-accordion {
-            display: none;
-        }
-    </style>
-<?php }
+function pf_custom_css() {
+	?>
+	<style>
+		.toplevel_page_powered-cache #extension-varnish,
+		.toplevel_page_powered-cache #extension-ga,
+		.toplevel_page_powered-cache #extension-fb-pixel,
+		.toplevel_page_powered-cache .sui-footer,
+		.toplevel_page_powered-cache footer, #llar-header-upgrade-message,
+		.dashboard-section-1 .info-box-3,
+		#llar-apps-accordion {
+			display: none;
+		}
+	</style>
+	<?php
+}
 
 add_action( 'admin_notices', 'pf_show_platform_cache_notice' );
 
@@ -415,7 +419,7 @@ function pf_show_platform_cache_notice() {
 
 	$incompatible_plugin = false;
 	$plugins             = array(
-		//'hummingbird-performance'           => 'hummingbird-performance/wp-hummingbird.php',
+		// 'hummingbird-performance'           => 'hummingbird-performance/wp-hummingbird.php',
 		'hyper-cache'                       => 'hyper-cache/plugin.php',
 		'hyper-cache-extended'              => 'hyper-cache-extended/plugin.php',
 		'wp-fast-cache'                     => 'wp-fast-cache/wp-fast-cache.php',
@@ -433,20 +437,20 @@ function pf_show_platform_cache_notice() {
 		if ( is_plugin_active( $plugin ) ) {
 			$incompatible_plugin = true;
 			$plugin_data         = get_plugin_data( WP_PLUGIN_DIR . DIRECTORY_SEPARATOR . $plugin );
-			$plugins_message     .= '<li><strong>' . esc_attr( $plugin_data['Name'] ) . '</strong><br><br> <a href="' . esc_url_raw( wp_nonce_url( admin_url( 'plugins.php?action=deactivate&plugin=' . urlencode( $plugin ) ), 'deactivate-plugin_' . $plugin ) ) . '" class="button-secondary">' . esc_html__( 'Deactivate', 'powered-cache' ) . '</a></li>';
+			$plugins_message    .= '<li><strong>' . esc_attr( $plugin_data['Name'] ) . '</strong><br><br> <a href="' . esc_url_raw( wp_nonce_url( admin_url( 'plugins.php?action=deactivate&plugin=' . urlencode( $plugin ) ), 'deactivate-plugin_' . $plugin ) ) . '" class="button-secondary">' . esc_html__( 'Deactivate', 'powered-cache' ) . '</a></li>';
 		}
 	}
 
 	if ( $incompatible_plugin && current_user_can( 'activate_plugins' ) ) {
-		$err_msg = '<div class="error">';
+		$err_msg  = '<div class="error">';
 		$err_msg .= '<p>'
-		            . esc_html__( 'We found a caching plugin that we do not recommend using on our platform. We advise you to disable this plugin so that our built-in platform caching can take over.', 'powered-cache' )
-		            . '</p>';
+					. esc_html__( 'We found a caching plugin that we do not recommend using on our platform. We advise you to disable this plugin so that our built-in platform caching can take over.', 'powered-cache' )
+					. '</p>';
 		$err_msg .= '<ul class="incompatible-plugin-list">';
 		$err_msg .= $plugins_message;
 		$err_msg .= '</ul>';
 		$err_msg .= '</div>';
 
-        echo $err_msg;
+		echo $err_msg;
 	}
 }

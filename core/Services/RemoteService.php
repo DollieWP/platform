@@ -97,17 +97,17 @@ class RemoteService extends Singleton {
 	 * @return void
 	 */
 	protected function register_actions() {
-		$actions        = array(
-			//'sync'         => 'action_sync',
+		$actions = array(
+			// 'sync'         => 'action_sync',
 			'status'       => 'action_status',
 			'upgrade'      => 'action_upgrade',
 			'core_upgrade' => 'action_core_upgrade',
 			'login_token'  => 'action_login_token',
 			'export_db'    => 'action_export_db',
-			//'activate'     => 'action_activate',
-			//'deactivate'   => 'action_deactivate',
-			//'install'      => 'action_install',
-			//'delete'       => 'action_delete',
+			// 'activate'     => 'action_activate',
+			// 'deactivate'   => 'action_deactivate',
+			// 'install'      => 'action_install',
+			// 'delete'       => 'action_delete',
 		);
 		$custom_actions = apply_filters( 'wpd_platform_register_hub_action', [] );
 
@@ -154,13 +154,14 @@ class RemoteService extends Singleton {
 	private function validate_request( $data ) {
 		$headers = getallheaders();
 		if ( ! isset( $headers['Authorization'] ) || Plugin::instance()->get_host()->get_token() !== $headers['Authorization'] ) {
-			header( "HTTP/1.1 401 Unauthorized" );
+			header( 'HTTP/1.1 401 Unauthorized' );
 			exit;
 		}
 	}
 
 	/**
 	 * Run request.
+	 *
 	 * @return void
 	 */
 	private function process_action() {
@@ -174,7 +175,6 @@ class RemoteService extends Singleton {
 				$this->current_action,
 				$this
 			);
-
 
 		} else {
 			// Invalid action.
@@ -217,8 +217,8 @@ class RemoteService extends Singleton {
 			$this->send_json_error(
 				[
 					'errors' => [
-						'No user found'
-					]
+						'No user found',
+					],
 				]
 			);
 
@@ -228,7 +228,7 @@ class RemoteService extends Singleton {
 		$this->send_json_success(
 			[
 				'token' => $token,
-				'Token' => $token
+				'Token' => $token,
 			]
 		);
 	}
@@ -249,7 +249,6 @@ class RemoteService extends Singleton {
 					$errors[]     = $upgrade_data['error'];
 				}
 			}
-
 		}
 
 		// Process themes.
@@ -317,7 +316,6 @@ class RemoteService extends Singleton {
 	 * @param string $action The action name that was called.
 	 *
 	 * @return void
-	 *
 	 */
 	protected function action_core_upgrade( $params, $action ) {
 
@@ -359,8 +357,8 @@ class RemoteService extends Singleton {
 			$this->send_json_error(
 				[
 					'errors' => [
-						'Path and filename are required defined'
-					]
+						'Path and filename are required defined',
+					],
 				]
 			);
 
@@ -381,8 +379,8 @@ class RemoteService extends Singleton {
 			$this->send_json_error(
 				[
 					'errors' => [
-						"Failed to connect to MySQL: " . $mysqli->connect_error
-					]
+						'Failed to connect to MySQL: ' . $mysqli->connect_error,
+					],
 				]
 			);
 			exit;
@@ -398,9 +396,9 @@ class RemoteService extends Singleton {
 			$result     = $mysqli->query( 'SELECT * FROM ' . $table );
 			$num_fields = $result->field_count;
 
-			$sql  .= 'DROP TABLE IF EXISTS ' . $table . ";\n";
+			$sql .= 'DROP TABLE IF EXISTS ' . $table . ";\n";
 			$row2 = $mysqli->query( 'SHOW CREATE TABLE ' . $table )->fetch_row();
-			$sql  .= $row2[1] . ";\n\n";
+			$sql .= $row2[1] . ";\n\n";
 
 			for ( $i = 0; $i < $num_fields; $i ++ ) {
 				while ( $row3 = $result->fetch_row() ) {
@@ -440,7 +438,7 @@ class RemoteService extends Singleton {
 	 * Return success results for API to the hub
 	 *
 	 * @param mixed $data Data to encode as JSON, then print and die.
-	 * @param int $status_code The HTTP status code to output, defaults to 200.
+	 * @param int   $status_code The HTTP status code to output, defaults to 200.
 	 *
 	 * @return void
 	 */
@@ -451,7 +449,7 @@ class RemoteService extends Singleton {
 			$req_time   = round( ( microtime( true ) - $this->timer ), 4 ) . 's';
 			$req_status = is_null( $status_code ) ? 200 : $status_code;
 			$log        = '[WPD API call response] %s %s %s %s';
-			$log        .= "\n   Response: (success) %s\n";
+			$log       .= "\n   Response: (success) %s\n";
 			$msg        = sprintf(
 				$log,
 				$_GET['wpd-platform'], // phpcs:ignore
@@ -470,7 +468,7 @@ class RemoteService extends Singleton {
 	 * Return error results for API to the hub.
 	 *
 	 * @param mixed $data Data to encode as JSON, then print and die.
-	 * @param int $status_code The HTTP status code to output, defaults to 200.
+	 * @param int   $status_code The HTTP status code to output, defaults to 200.
 	 *
 	 * @return void
 	 */
@@ -481,7 +479,7 @@ class RemoteService extends Singleton {
 			$req_time   = round( ( microtime( true ) - $this->timer ), 4 ) . 's';
 			$req_status = is_null( $status_code ) ? 200 : $status_code;
 			$log        = '[WPD API call response] %s %s %s %s';
-			$log        .= "\n   Response: (error) %s\n";
+			$log       .= "\n   Response: (error) %s\n";
 			$msg        = sprintf(
 				$log,
 				$_GET['wpd-platform'], // phpcs:ignore

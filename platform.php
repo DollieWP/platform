@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Platform Worker
  * Description: This plugin powers our management platform.
- * Version: 3.3.1
+ * Version: 3.4.0
  * Text Domain: platform
  * Domain Path: /languages/
  */
@@ -10,13 +10,13 @@
 // Exit if accessed directly.
 defined( 'ABSPATH' ) || exit;
 
-// Bail out if the plugin is already loaded
+// Bail out if the plugin is already loaded.
 if ( defined( 'PLATFORM_VERSION' ) ) {
 	return;
 }
 
 define( 'PLATFORM_PLUGIN_SLUG', 'platform' );
-define( 'PLATFORM_VERSION', '3.0.9' );
+define( 'PLATFORM_VERSION', '3.4.0' );
 
 if ( defined( 'WPD_PLATFORM_IS_MU' ) && WPD_PLATFORM_IS_MU ) {
 	if ( ! defined( 'PLATFORM_PLUGIN_DIR' ) ) {
@@ -31,7 +31,7 @@ if ( defined( 'WPD_PLATFORM_IS_MU' ) && WPD_PLATFORM_IS_MU ) {
 	define( 'PLATFORM_PLUGIN_URL', plugins_url( '/', PLATFORM_PLUGIN_FILE ) );
 }
 
-// Autoload
+// Autoload.
 require_once 'bootstrap.php';
 
 /**

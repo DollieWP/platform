@@ -5,6 +5,7 @@ namespace WPD_Platform\Factories;
 use WPD_Platform\Plugin;
 
 class InternalHost extends BaseHost {
+
 	public function __construct() {
 		parent::__construct();
 
@@ -18,7 +19,7 @@ class InternalHost extends BaseHost {
 			define( 'PLATFORM_INCLUDES_DIR', '/usr/src/dollie/' );
 		}
 
-		// Load S5 code
+		// Load S5 code.
 		if ( file_exists( PLATFORM_INCLUDES_DIR . 's5.php' ) ) {
 			require PLATFORM_INCLUDES_DIR . 's5.php';
 		}
@@ -69,13 +70,9 @@ class InternalHost extends BaseHost {
 				'expires'  => time() + 60 * 30,
 				'path'     => '/',
 				'domain'   => parse_url( get_site_url(), PHP_URL_HOST ),
-				// leading dot for compatibility or use subdomain
 				'secure'   => true,
-				// or false
 				'httponly' => false,
-				// or false
-				'samesite' => 'None'
-				// None || Lax || Strict
+				'samesite' => 'None',
 			);
 
 			setcookie( 'wpd_allow_access', 1, $cookie_options );

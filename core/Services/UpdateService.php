@@ -84,7 +84,6 @@ class UpdateService extends Singleton {
 
 		switch ( $type ) {
 			case 'plugin':
-
 				$file = $this->get_full_plugin_path( $file );
 
 				// checks for available updates.
@@ -116,7 +115,6 @@ class UpdateService extends Singleton {
 				break;
 
 			case 'theme':
-
 				// Update the update transient.
 				wp_update_themes();
 
@@ -143,10 +141,14 @@ class UpdateService extends Singleton {
 
 		// Handle different types of errors.
 		if ( is_wp_error( $skin->result ) ) {
-			if ( in_array( $skin->result->get_error_code(), array(
-				'remove_old_failed',
-				'mkdir_failed_ziparchive'
-			), true ) ) {
+			if ( in_array(
+				$skin->result->get_error_code(),
+				array(
+					'remove_old_failed',
+					'mkdir_failed_ziparchive',
+				),
+				true
+			) ) {
 				$response['error']['code']    = 'UPG.10';
 				$response['error']['message'] = $skin->get_error_messages();
 			} else {
@@ -157,10 +159,14 @@ class UpdateService extends Singleton {
 			return $response;
 		}
 
-		if ( in_array( $skin->get_errors()->get_error_code(), array(
-			'remove_old_failed',
-			'mkdir_failed_ziparchive'
-		), true ) ) {
+		if ( in_array(
+			$skin->get_errors()->get_error_code(),
+			array(
+				'remove_old_failed',
+				'mkdir_failed_ziparchive',
+			),
+			true
+		) ) {
 			$response['error']['code']    = 'UPG.10';
 			$response['error']['message'] = $skin->get_error_messages();
 
@@ -203,7 +209,6 @@ class UpdateService extends Singleton {
 				 *
 				 * @param array $plugin_data Plugin data.
 				 * @param string $file Plugin file.
-				 *
 				 */
 				$plugin_data = apply_filters( 'wpd_platform_upgrader_get_plugin_data', array(), $file );
 
@@ -240,7 +245,6 @@ class UpdateService extends Singleton {
 	 *
 	 * @return bool True on success.
 	 * @since  4.0.0
-	 *
 	 */
 	public function upgrade( $pid ) {
 		$this->clear_error();
@@ -271,7 +275,6 @@ class UpdateService extends Singleton {
 		include_once ABSPATH . 'wp-admin/includes/theme.php';
 		include_once ABSPATH . 'wp-admin/includes/file.php';
 
-
 		// Upgrade the item.
 		$result = $this->process_upgrade( $filename, $type );
 
@@ -292,7 +295,8 @@ class UpdateService extends Singleton {
 
 	/**
 	 * Upgrade WP Core to latest version.
-	 **
+	 * *
+	 *
 	 * @return bool True on success.
 	 */
 	public function upgrade_core() {
@@ -421,7 +425,6 @@ class UpdateService extends Singleton {
 					'You have disabled automatic core updates via define( \'WP_AUTO_UPDATE_CORE\', false ); in your wp-config.php or a filter. Remove that code to allow updating core.',
 					'platform'
 				)
-
 			);
 
 			return false;
@@ -452,7 +455,7 @@ class UpdateService extends Singleton {
 			// if a rollback was run and errored append that to message.
 			if ( $error_code === 'rollback_was_required' && is_wp_error( $result->get_error_data()->rollback ) ) {
 				$rollback_result = $result->get_error_data()->rollback;
-				$error_msg       .= ' Rollback: ' . $rollback_result->get_error_message();
+				$error_msg      .= ' Rollback: ' . $rollback_result->get_error_message();
 			}
 
 			$this->set_error( 'core', $error_code, $error_msg );
@@ -496,7 +499,6 @@ class UpdateService extends Singleton {
 	 * @param string $pid The PID that was installed/updated.
 	 * @param string $code Error code.
 	 * @param string $message Error message.
-	 *
 	 */
 	public function set_error( $pid, $code, $message ) {
 		$this->error = array(
@@ -514,7 +516,6 @@ class UpdateService extends Singleton {
 
 	/**
 	 * Clears the current error flag.
-	 *
 	 */
 	public function clear_error() {
 		$this->error = false;
@@ -591,15 +592,15 @@ class UpdateService extends Singleton {
 		// If we don't have write permissions, do we have FTP settings?
 		if ( ! $writable ) {
 			$writable = defined( 'FTP_USER' )
-			            && defined( 'FTP_PASS' )
-			            && defined( 'FTP_HOST' );
+						&& defined( 'FTP_PASS' )
+						&& defined( 'FTP_HOST' );
 		}
 
 		// Lastly, if no other option worked, do we have SSH settings?
 		if ( ! $writable ) {
 			$writable = defined( 'FTP_USER' )
-			            && defined( 'FTP_PUBKEY' )
-			            && defined( 'FTP_PRIKEY' );
+						&& defined( 'FTP_PUBKEY' )
+						&& defined( 'FTP_PRIKEY' );
 		}
 
 		return $writable;

@@ -85,9 +85,8 @@ class StatsService extends Singleton {
 		 * Plugins
 		 */
 
-		$plugins_updates      = 0;
-		$plugins              = [];
-		$plugins_auto_updates = (array) get_site_option( 'auto_update_plugins', array() );
+		$plugins_updates = 0;
+		$plugins         = [];
 
 		if ( $full === true ) {
 			if ( ! function_exists( 'get_plugin_updates' ) ) {
@@ -96,8 +95,9 @@ class StatsService extends Singleton {
 
 			wp_update_plugins();
 
-			$plugins_update = get_site_transient( 'update_plugins' );
-			$plugins_active = get_option( 'active_plugins' );
+			$plugins_update       = get_site_transient( 'update_plugins' );
+			$plugins_active       = get_option( 'active_plugins' );
+			$plugins_auto_updates = (array) get_site_option( 'auto_update_plugins', array() );
 
 			foreach ( get_plugins() as $full_path => $plugin ) {
 				$path   = explode( '/', $full_path );
@@ -127,10 +127,9 @@ class StatsService extends Singleton {
 		 * Themes
 		 */
 
-		$themes_updates      = 0;
-		$themes              = [];
-		$active_theme        = [];
-		$themes_auto_updates = (array) get_site_option( 'auto_update_themes', array() );
+		$themes_updates = 0;
+		$themes         = [];
+		$active_theme   = [];
 
 		if ( $full === true ) {
 			wp_update_themes();
@@ -148,7 +147,8 @@ class StatsService extends Singleton {
 				'screenshot'  => get_template_directory_uri() . '/' . $theme_data->screenshot,
 			];
 
-			$themes_update = get_site_transient( 'update_themes' );
+			$themes_update       = get_site_transient( 'update_themes' );
+			$themes_auto_updates = (array) get_site_option( 'auto_update_themes', array() );
 
 			foreach ( wp_get_themes() as $slug => $theme ) {
 				if ( isset( $themes_update->response[ $theme->get_stylesheet() ] ) ) {

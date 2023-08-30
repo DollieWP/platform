@@ -2,7 +2,6 @@
 
 namespace WPD_Platform;
 
-
 class Whitelabel extends Singleton {
 
 	const DB_OPTION = 'wpd_whitelabel';
@@ -35,7 +34,6 @@ class Whitelabel extends Singleton {
 		}
 
 		return $plugin_name;
-
 	}
 
 	/**
@@ -56,8 +54,9 @@ class Whitelabel extends Singleton {
 		}
 
 		foreach ( $whitelabel_data as $string => $whitelabel ) {
-				$current_strings[$string] = $whitelabel;
+				$current_strings[ $string ] = $whitelabel;
 		}
+
 		update_option( self::DB_OPTION, $current_strings );
 	}
 }

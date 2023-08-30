@@ -21,7 +21,7 @@ final class Plugin {
 	 * @return Plugin
 	 */
 	public static function instance() {
-		// Store instance locally
+		// Store instance locally.
 		static $instance = null;
 
 		if ( null === $instance ) {
@@ -38,7 +38,6 @@ final class Plugin {
 	 * Prevent the plugin class from being loaded more than once.
 	 */
 	private function __construct() {
-
 		new Hooks();
 	}
 
@@ -99,7 +98,7 @@ final class Plugin {
 
 		// Custom plugin updates only when installed as plugin on external site.
 		if ( ! $this->is_wpmu() && $this->get_host()->is_type_external()
-		     && file_exists( $this->plugin_dir . 'includes/plugin-update-checker/plugin-update-checker.php' ) ) {
+			 && file_exists( $this->plugin_dir . 'includes/plugin-update-checker/plugin-update-checker.php' ) ) {
 
 			require $this->plugin_dir . 'includes/plugin-update-checker/plugin-update-checker.php';
 			PucFactory::buildUpdateChecker(
@@ -109,7 +108,7 @@ final class Plugin {
 			);
 		}
 
-		// Check if we should disable update checks
+		// Check if we should disable update checks.
 		if ( ! defined( 'OSDWPUVERSION' ) && file_exists( $this->plugin_dir . 'includes/disable-wordpress-updates/disable-updates.php' ) && get_option( 'dollie_disable_updates' )
 		) {
 			require $this->plugin_dir . 'includes/disable-wordpress-updates/disable-updates.php';
@@ -117,8 +116,8 @@ final class Plugin {
 
 		// Load Platform Cache.
 		if ( ! defined( 'POWERED_CACHE_VERSION' )
-		     && $this->should_load_platform_cache()
-		     && file_exists( $this->plugin_dir . 'includes/powered-cache/powered-cache.php' )
+			 && $this->should_load_platform_cache()
+			 && file_exists( $this->plugin_dir . 'includes/powered-cache/powered-cache.php' )
 		) {
 			require $this->plugin_dir . 'includes/powered-cache/powered-cache.php';
 			update_option( 'dollie_caching_method', 'powered-cache' );
@@ -126,7 +125,6 @@ final class Plugin {
 	}
 
 	private function setup_actions() {
-
 		// Load textdomain.
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 	}
@@ -164,7 +162,7 @@ final class Plugin {
 				foreach ( $val->callbacks as $callback ) {
 					foreach ( $callback as $item ) {
 
-						// we have a class
+						// We have a class.
 						if ( is_array( $item['function'] ) ) {
 							$name = get_class( $item['function'][0] );
 						} else {
@@ -175,7 +173,7 @@ final class Plugin {
 							continue;
 						}
 
-						// We have a plugin to handle email delivery
+						// We have a plugin to handle email delivery.
 						$load_email_overrides = false;
 					}
 				}
@@ -192,6 +190,7 @@ final class Plugin {
 		if ( $this->get_host()->is_type_external() ) {
 			return false;
 		}
+
 		if ( ! function_exists( 'is_plugin_active' ) ) {
 			include_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
@@ -226,12 +225,14 @@ final class Plugin {
 	}
 
 	public function get_host() {
-		if ( empty( $this->host ) ) {
-			if ( defined( 'S5_APP_ID' ) ) {
-				$this->host = new InternalHost();
-			} else {
-				$this->host = new ExternalHost();
-			}
+		if ( ! empty( $this->host ) ) {
+			return $this->host;
+		}
+
+		if ( defined( 'S5_APP_ID' ) ) {
+			$this->host = new InternalHost();
+		} else {
+			$this->host = new ExternalHost();
 		}
 
 		return $this->host;
@@ -246,11 +247,15 @@ final class Plugin {
 		return defined( 'WPD_PLATFORM_IS_MU' ) && WPD_PLATFORM_IS_MU;
 	}
 
-
+	/**
+	 * @return void
+	 */
 	public function activate_plugin() {
-		if ( ! $this->is_wpmu() ) {
-			$this->get_host()->register_site();
+		if ( $this->is_wpmu() ) {
+			return;
 		}
+
+		$this->get_host()->register_site();
 	}
 
 }

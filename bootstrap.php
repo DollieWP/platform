@@ -48,5 +48,3 @@ if ( file_exists( PLATFORM_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
 
 	spl_autoload_register( '_wpd_platform_autoload' );
 }
-
-

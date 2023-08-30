@@ -5,6 +5,7 @@ namespace WPD_Platform\Factories;
 use WPD_Platform\Services\LoginService;
 
 class ExternalHost extends BaseHost {
+
 	public function __construct() {
 		parent::__construct();
 		$this->host_type = self::TYPE_2;
@@ -23,7 +24,6 @@ class ExternalHost extends BaseHost {
 	}
 
 	public function base_access() {
-
 		$valid_passwords = [ 'container' => $this->get_token() ];
 		$valid_users     = array_keys( $valid_passwords );
 
@@ -69,8 +69,8 @@ class ExternalHost extends BaseHost {
 	}
 
 	/**
-     * Save site hash and partner hash in DB.
-     *
+	 * Save site hash and partner hash in DB.
+	 *
 	 * @param $site_id
 	 *
 	 * @return void
@@ -78,7 +78,6 @@ class ExternalHost extends BaseHost {
 	public function setup_connection( $site_id ) {
 		update_option( 'wpd_connection_id', $site_id );
 		update_option( 'wpd_connection_partner_hash', $this->get_partner_hash() );
-
 	}
 
 	public function remove_connection() {
@@ -88,23 +87,22 @@ class ExternalHost extends BaseHost {
 		return true;
 	}
 
-    public function get_partner_hash() {
-	    $partner_hash = '';
+	public function get_partner_hash() {
+		$partner_hash = '';
 
-	    if ( defined( 'WPD_PARTNER_ID' ) && ! empty( WPD_PARTNER_ID ) && strpos(WPD_PARTNER_ID, '[[') === false ) {
-            return WPD_PARTNER_ID;
-	    }
+		if ( defined( 'WPD_PARTNER_ID' ) && ! empty( WPD_PARTNER_ID ) && strpos( WPD_PARTNER_ID, '[[' ) === false ) {
+			return WPD_PARTNER_ID;
+		}
 
-	    return get_option( 'wpd_connection_partner_hash', $partner_hash ) ;
-    }
+		return get_option( 'wpd_connection_partner_hash', $partner_hash );
+	}
 
 	/**
-     * Connect site to HQ
-     *
+	 * Connect site to HQ
+	 *
 	 * @return bool
 	 */
 	public function register_site() {
-
 		if ( $this->is_connected() ) {
 			return false;
 		}
@@ -116,30 +114,33 @@ class ExternalHost extends BaseHost {
 		}
 
 		$api_host = defined( 'WPD_WORKER_API_URL' ) ? WPD_WORKER_API_URL : self::API_URL;
-		$response = wp_remote_post( $api_host . "external-sites/connect", [
-			'headers' => array(
-				'Authorization' => $this->get_token()
-			),
-			'body'      => [
-				'partner_hash' => $this->get_partner_hash(),
-				'name'         => get_bloginfo( 'name' ),
-				'description'  => get_bloginfo( 'description' ),
-				'uri'          => site_url(),
-				'username'     => $current_user->user_login,
-				'email'        => $current_user->user_email,
-				'wp_version'   => get_bloginfo( 'version' ),
-				'php_version'  => phpversion(),
-			],
-			'timeout'   => 30,
-			'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
-		] );
+		$response = wp_remote_post(
+			$api_host . 'external-sites/connect',
+			[
+				'headers'   => array(
+					'Authorization' => $this->get_token(),
+				),
+				'body'      => [
+					'partner_hash' => $this->get_partner_hash(),
+					'name'         => get_bloginfo( 'name' ),
+					'description'  => get_bloginfo( 'description' ),
+					'uri'          => site_url(),
+					'username'     => $current_user->user_login,
+					'email'        => $current_user->user_email,
+					'wp_version'   => get_bloginfo( 'version' ),
+					'php_version'  => phpversion(),
+				],
+				'timeout'   => 30,
+				'sslverify' => apply_filters( 'https_local_ssl_verify', false ),
+			]
+		);
 
-		// Check for errors
+		// Check for errors.
 		if ( is_wp_error( $response ) ) {
 			return false;
 		}
 
-		// Get the response data
+		// Get the response data.
 		$response_data = wp_remote_retrieve_body( $response );
 
 		if ( empty( $response_data ) ) {
@@ -155,31 +156,30 @@ class ExternalHost extends BaseHost {
 		$this->setup_connection( $response_data->id );
 		set_transient( 'wpd_connection_status', 'success', 10 );
 
-        do_action('wpd_platform/after/register_site');
+		do_action( 'wpd_platform/after/register_site' );
 
-        return $response_data->id;
-
+		return $response_data->id;
 	}
 
 	/**
 	 * Display connection messages in admin.
+	 *
 	 * @return void
 	 */
 	public function admin_notices() {
-
 		$transient = get_transient( 'wpd_connection_status' );
 
 		if ( $transient === 'success' && $this->is_connected() ) {
 			?>
-            <div class="notice notice-success is-dismissible">
-                <p><?php _e( 'Your site has been connected to site management platform!', 'platform' ); ?></p>
-            </div>
+			<div class="notice notice-success is-dismissible">
+				<p><?php _e( 'Your site has been connected to site management platform!', 'platform' ); ?></p>
+			</div>
 			<?php
 		} elseif ( $transient === 'failure' ) {
 			?>
-            <div class="notice notice-error is-dismissible">
-                <p><?php _e( 'There was an error connecting your site to management platform. Please contact support!', 'platform' ); ?></p>
-            </div>
+			<div class="notice notice-error is-dismissible">
+				<p><?php _e( 'There was an error connecting your site to management platform. Please contact support!', 'platform' ); ?></p>
+			</div>
 			<?php
 		}
 	}

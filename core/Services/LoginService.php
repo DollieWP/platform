@@ -14,7 +14,7 @@ class LoginService extends Singleton {
 			return;
 		}
 
-		// make sure to redirect to wp site domain
+		// Make sure to redirect to wp site domain.
 		$current_url = $this->current_location();
 		$site_url    = str_replace( [ 'http://', 'https://' ], '', home_url() );
 
@@ -25,27 +25,29 @@ class LoginService extends Singleton {
 			exit;
 		}
 
-		// Check token
+		// Check token.
 
 		$meta_key    = 'wpd_login_token';
-		$found_users = get_users( array(
-			'meta_key'   => $meta_key,
-			'meta_value' => sanitize_text_field( $_GET['s5token'] ),
-			'number'     => 1
-		) );
+		$found_users = get_users(
+			array(
+				'meta_key'   => $meta_key,
+				'meta_value' => sanitize_text_field( $_GET['s5token'] ),
+				'number'     => 1,
+			)
+		);
 
 		if ( $found_users ) {
 
-			// Just one entry
+			// Just one entry.
 			foreach ( $found_users as $user ) {
 
-				// Regenerate the token
+				// Regenerate the token.
 				update_user_meta( $user->ID, $meta_key, sha1( mt_rand( 1, 90000 ) . 'WPDSALT' ) );
 
-				// Login as this user
+				// Login as this user.
 				wp_clear_auth_cookie();
-				wp_set_current_user($user->ID, $user->user_login);
-				wp_set_auth_cookie($user->ID);
+				wp_set_current_user( $user->ID, $user->user_login );
+				wp_set_auth_cookie( $user->ID );
 				do_action( 'wp_login', $user->ID, $user->user_login, $user );
 
 				if ( is_user_logged_in() ) {
@@ -65,14 +67,13 @@ class LoginService extends Singleton {
 				exit;
 			}
 		}
-
 	}
 
 	private function current_location() {
 		if ( ( isset( $_SERVER['HTTPS'] ) &&
-		       ( $_SERVER['HTTPS'] === 'on' || $_SERVER['HTTPS'] === 1 ) ) ||
-		     ( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) &&
-		       $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https' ) ) {
+			   ( $_SERVER['HTTPS'] === 'on' || $_SERVER['HTTPS'] === 1 ) ) ||
+			 ( isset( $_SERVER['HTTP_X_FORWARDED_PROTO'] ) &&
+			   $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https' ) ) {
 			$protocol = 'https://';
 		} else {
 			$protocol = 'http://';
@@ -89,14 +90,13 @@ class LoginService extends Singleton {
 	 * @return string
 	 */
 	public function get_login_token( $username = null ) {
-
-		// Include the now instantiated global $wpdb Class for use
+		// Include the now instantiated global $wpdb Class for use.
 		global $wpdb;
 		$wpdb->hide_errors();
 
-		// based on user get or token
-		// sql in wpdb_usermeta get by wpd_login_token
-		// if not exists generate and save in usermeta
+		// based on user get or token.
+		// sql in wpdb_usermeta get by wpd_login_token.
+		// if not exists generate and save in usermeta.
 
 		$user     = false;
 		$meta_key = 'wpd_login_token';
@@ -161,7 +161,5 @@ class LoginService extends Singleton {
 		}
 
 		return '';
-
 	}
-
 }

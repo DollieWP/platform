@@ -1,65 +1,70 @@
 <?php
+
 if ( ! defined( 'WP_DISABLE_FATAL_ERROR_HANDLER' ) ) {
 	define( 'WP_DISABLE_FATAL_ERROR_HANDLER', true );
 }
+
 if ( ! defined( 'WP_DEBUG' ) ) {
 	define( 'WP_DEBUG', false );
 }
+
 if ( ! defined( 'WP_DEBUG_LOG' ) ) {
 	define( 'WP_DEBUG_LOG', false );
 }
+
 if ( ! defined( 'WP_DEBUG_DISPLAY' ) ) {
 	define( 'WP_DEBUG_DISPLAY', false );
 }
-function wpd_platform_base_dir () {
-    $path = dirname(__FILE__);
-    while (true) {
-        if (file_exists($path."/wp-config.php")) {
-            return $path."/";
-        }
-        $path = dirname($path);
-    }
-}
-// Require the wp-load.php file (which loads wp-config.php and bootstraps WordPress)
-require wpd_platform_base_dir() . '/wp-load.php';
 
+function wpd_platform_base_dir() {
+	$path = dirname( __FILE__ );
+	while ( true ) {
+		if ( file_exists( $path . '/wp-config.php' ) ) {
+			return $path . '/';
+		}
+		$path = dirname( $path );
+	}
+}
+
+// Require the wp-load.php file (which loads wp-config.php and bootstraps WordPress).
+require wpd_platform_base_dir() . '/wp-load.php';
 
 define( 'SHORTINIT', true );
 
 // Restrict access to page.
-if ( $_COOKIE['wpd_allow_access'] == false) {
-    \WPD_Platform\Plugin::instance()->get_host()->restrict_access();
+if ( $_COOKIE['wpd_allow_access'] == false ) {
+	\WPD_Platform\Plugin::instance()->get_host()->restrict_access();
 }
 
-
 /** Loads the WordPress Environment and Template */
-require_once PLATFORM_WORDPRESS_DIR . "/wp-blog-header.php";
-error_reporting(0);
+require_once PLATFORM_WORDPRESS_DIR . '/wp-blog-header.php';
+error_reporting( 0 );
 
 define( 'WP_USE_THEMES', true );
-
 
 if ( ! defined( 'WP_DISABLE_FATAL_ERROR_HANDLER' ) ) {
 	define( 'WP_DISABLE_FATAL_ERROR_HANDLER', true );
 }
+
 if ( ! defined( 'WP_DEBUG' ) ) {
 	define( 'WP_DEBUG', false );
 }
+
 if ( ! defined( 'WP_DEBUG_LOG' ) ) {
 	define( 'WP_DEBUG_LOG', false );
 }
+
 if ( ! defined( 'WP_DEBUG_DISPLAY' ) ) {
 	define( 'WP_DEBUG_DISPLAY', false );
 }
 
 $object_cache = 'enabled';
-//Our Basic WP Feed
+
+// Our Basic WP Feed.
 $wp_feed = array(
-	"total-memory" => round( memory_get_usage() / 1024 / 1024, 2 ),
-	"sql-queries"      => get_num_queries(),
-	"sql-time"         => timer_stop( 0, 3 ),
+	'total-memory' => round( memory_get_usage() / 1024 / 1024, 2 ),
+	'sql-queries'  => get_num_queries(),
+	'sql-time'     => timer_stop( 0, 3 ),
 );
 
 echo json_encode( $wp_feed, JSON_PRETTY_PRINT );
-
-?>
