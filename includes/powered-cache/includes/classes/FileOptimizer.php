@@ -9,6 +9,8 @@ namespace PoweredCache;
 
 use PoweredCache\Dependencies\voku\helper\HtmlMin;
 use const PoweredCache\Constants\POST_META_DISABLE_CSS_OPTIMIZATION;
+use const PoweredCache\Constants\POST_META_DISABLE_JS_DEFER;
+use const PoweredCache\Constants\POST_META_DISABLE_JS_DELAY;
 use const PoweredCache\Constants\POST_META_DISABLE_JS_OPTIMIZATION;
 use PoweredCache\Optimizer\CSS;
 use PoweredCache\Optimizer\Helper;
@@ -96,6 +98,15 @@ class FileOptimizer {
 		}
 
 		/**
+		 * Don't optimize in customizer preview
+		 */
+		if ( ! empty( $_GET['customize_changeset_uuid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			\PoweredCache\Utils\log( 'Do not run file optimizer in customizer preview' );
+
+			return;
+		}
+
+		/**
 		 * Filters FileOptimizer integration
 		 *
 		 * @hook   powered_cache_fo_disable
@@ -116,7 +127,8 @@ class FileOptimizer {
 		add_filter( 'script_loader_tag', [ $this, 'js_minify' ], 10, 3 );
 		add_filter( 'style_loader_tag', [ $this, 'css_minify' ], 10, 4 );
 		add_filter( 'powered_cache_fo_script_loader_tag', [ $this, 'change_js_execute_method' ] );
-		add_action( 'after_setup_theme', [ $this, 'process_buffer' ], 999 );
+		add_filter( 'script_loader_tag', [ $this, 'change_js_execute_method' ], 99 );
+		add_action( 'after_setup_theme', [ $this, 'maybe_start_buffer' ], 999 );
 		add_action( 'template_redirect', [ $this, 'maybe_suppress_optimizations' ] );
 
 		if ( ! $this->settings['combine_js'] ) {
@@ -125,10 +137,6 @@ class FileOptimizer {
 
 		if ( ! $this->settings['combine_css'] ) {
 			add_filter( 'powered_cache_fo_css_do_concat', '__return_false' );
-		}
-
-		if ( ! $this->settings['js_execution_optimized_only'] ) {
-			add_filter( 'script_loader_tag', [ $this, 'change_js_execute_method' ], 99 );
 		}
 
 		if ( $this->settings['combine_google_fonts'] ) {
@@ -141,8 +149,13 @@ class FileOptimizer {
 	 *
 	 * @return void
 	 */
-	public function process_buffer() {
-		if ( strpos( $_SERVER['REQUEST_URI'], 'robots.txt' ) !== false || strpos( $_SERVER['REQUEST_URI'], '.htaccess' ) !== false ) {
+	public function maybe_start_buffer() {
+		if ( ! isset( $_SERVER['REQUEST_URI'] ) ) {
+			return;
+		}
+		$request_uri = sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) );
+
+		if ( strpos( $request_uri, 'robots.txt' ) !== false || strpos( $request_uri, '.htaccess' ) !== false ) {
 			return;
 		}
 
@@ -150,11 +163,10 @@ class FileOptimizer {
 			return;
 		}
 
-		$file_extension = $_SERVER['REQUEST_URI'];
-		$file_extension = preg_replace( '#^(.*?)\?.*$#', '$1', $file_extension );
+		$file_extension = preg_replace( '#^(.*?)\?.*$#', '$1', $request_uri );
 		$file_extension = trim( preg_replace( '#^.*\.(.*)$#', '$1', $file_extension ) );
 
-		if ( ! preg_match( '#index\.php$#i', $_SERVER['REQUEST_URI'] ) && in_array( $file_extension, array( 'php', 'xml', 'xsl' ), true ) ) {
+		if ( ! preg_match( '#index\.php$#i', $request_uri ) && in_array( $file_extension, array( 'php', 'xml', 'xsl' ), true ) ) {
 			return;
 		}
 
@@ -162,9 +174,23 @@ class FileOptimizer {
 			return;
 		}
 
-		ob_start( [ $this, 'maybe_delay_scripts' ] );
-		ob_start( [ $this, 'maybe_replace_google_fonts_with_bunny_fonts' ] );
-		ob_start( [ $this, 'maybe_minify_html' ] );
+		ob_start( [ $this, 'process_buffer' ] );
+	}
+
+	/**
+	 * Process output buffer
+	 *
+	 * @param string $html Output buffer
+	 *
+	 * @return string|string[]|null
+	 */
+	public function process_buffer( $html ) {
+		$html = $this->maybe_defer_inline_scripts( $html );
+		$html = $this->maybe_delay_scripts( $html );
+		$html = $this->maybe_replace_google_fonts_with_bunny_fonts( $html );
+		$html = $this->maybe_minify_html( $html );
+
+		return $html;
 	}
 
 	/**
@@ -202,6 +228,8 @@ class FileOptimizer {
 		if ( is_singular() ) {
 			$disable_css_optimization = (bool) get_post_meta( get_the_ID(), POST_META_DISABLE_CSS_OPTIMIZATION, true );
 			$disable_js_optimization  = (bool) get_post_meta( get_the_ID(), POST_META_DISABLE_JS_OPTIMIZATION, true );
+			$disable_js_defer         = (bool) get_post_meta( get_the_ID(), POST_META_DISABLE_JS_DEFER, true );
+			$disable_js_delay         = (bool) get_post_meta( get_the_ID(), POST_META_DISABLE_JS_DELAY, true );
 
 			if ( $disable_css_optimization ) {
 				add_filter( 'powered_cache_fo_css_do_concat', '__return_false' );
@@ -211,6 +239,15 @@ class FileOptimizer {
 			if ( $disable_js_optimization ) {
 				add_filter( 'powered_cache_fo_js_do_concat', '__return_false' );
 				add_filter( 'powered_cache_fo_disable_js_minify', '__return_true' );
+			}
+
+			if ( $disable_js_defer ) {
+				add_filter( 'powered_cache_disable_js_defer', '__return_true' );
+				add_filter( 'powered_cache_disable_js_defer_inline', '__return_true' );
+			}
+
+			if ( $disable_js_delay ) {
+				add_filter( 'powered_cache_delayed_js_skip', '__return_true' );
 			}
 		}
 	}
@@ -257,6 +294,8 @@ class FileOptimizer {
 		}
 
 		$html_min = new HtmlMin();
+		$html_min->doOptimizeViaHtmlDomParser( false );
+		$html_min->doRemoveOmittedQuotes( false );
 		$html_min->overwriteSpecialScriptTags( [ 'x-tmpl-mustache', 'text/template' ] );
 		$buffer = $html_min->minify( $buffer );
 
@@ -272,31 +311,37 @@ class FileOptimizer {
 	 * @return mixed
 	 */
 	public function change_js_execute_method( $tag ) {
-		$js_execution = $this->settings['js_execution_method'];
-		if ( ! $js_execution ) {
+		$is_defer = $this->settings['js_defer'];
+
+		if ( ! $is_defer ) {
 			return $tag;
 		}
 
-		if ( 'blocking' === $js_execution ) {
+		if ( preg_match( '/<script\s+[^>]*\b(?:async|defer)\b[^>]*>/i', $tag ) ) {
 			return $tag;
 		}
 
-		// @since 3.0 - rewrite dom for delayed option
-		if ( 'delayed' === $js_execution ) {
+		if ( Helper::is_defer_excluded( $tag ) ) {
 			return $tag;
 		}
 
-		if ( 'async' === $js_execution ) {
-			$js_attr = 'async="async"';
-		} elseif ( 'defer' === $js_execution ) {
-			$js_attr = 'defer="defer"';
+		/**
+		 * Filters whether disable or not disable Defer
+		 *
+		 * @hook   powered_cache_disable_js_defer
+		 *
+		 * @param  {boolean} true to disable defer
+		 *
+		 * @return {boolean} New value.
+		 * @since  3.2
+		 */
+		if ( apply_filters( 'powered_cache_disable_js_defer', false, $tag ) ) {
+			return $tag;
 		}
 
-		if ( false === stripos( $tag, $js_attr ) ) {
-			$search  = '<script ';
-			$replace = sprintf( '<script %s ', $js_attr );
-			$tag     = str_replace( $search, $replace, $tag );
-		}
+		$search  = '<script ';
+		$replace = '<script defer="defer" ';
+		$tag     = str_replace( $search, $replace, $tag );
 
 		return $tag;
 	}
@@ -378,11 +423,14 @@ class FileOptimizer {
 		 * @hook   powered_cache_fo_disable_js_minify
 		 *
 		 * @param  {boolean} true to disable JS minify
+		 * @param  {string} $tag    script tag <script...
+		 * @param  {string} $handle JS handle
+		 * @param  {string} $src    Resource URL
 		 *
 		 * @return {boolean} New value.
 		 * @since  2.0
 		 */
-		if ( apply_filters( 'powered_cache_fo_disable_js_minify', false ) ) {
+		if ( apply_filters( 'powered_cache_fo_disable_js_minify', false, $tag, $handle, $src ) ) {
 			return $tag;
 		}
 
@@ -636,7 +684,7 @@ class FileOptimizer {
 	 * @since 3.0
 	 */
 	public function maybe_delay_scripts( $html ) {
-		if ( 'delayed' !== $this->settings['js_execution_method'] ) {
+		if ( ! $this->settings['js_delay'] ) {
 			return $html;
 		}
 
@@ -655,11 +703,6 @@ class FileOptimizer {
 			$attributes = $match[1];
 			$content    = $match[2];
 
-			// when it's enabled for optimized scripts only
-			if ( $this->settings['js_execution_optimized_only'] && false === strpos( $script, 'file-optimizer.php' ) ) {
-				continue;
-			}
-
 			$is_delay_skipped = function_exists( 'is_user_logged_in' ) && is_user_logged_in();
 
 			/**
@@ -676,6 +719,10 @@ class FileOptimizer {
 				continue;
 			}
 
+			if ( Helper::is_delay_excluded( $script ) ) {
+				continue;
+			}
+
 			if ( strpos( $script, 'type=' ) === false || strpos( $script, "type='text/javascript'" ) !== false ) {
 				$new_script = $script;
 
@@ -685,7 +732,7 @@ class FileOptimizer {
 					$new_script = preg_replace( '/<script([^>]*)>/', '<script data-type="lazy"$1>', $new_script );
 				} else {
 					$new_content = 'data:text/javascript;base64,' . base64_encode( $content ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-					$new_script  = preg_replace( '/<script([^>]*)>/', "<script data-src=\"$new_content\" data-type=\"lazy\"$1>", $new_script ); // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
+					$new_script  = preg_replace( '/<script([^>]*)>/', "<script data-src=\"$new_content\" $1>", $new_script ); // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript
 					$new_script  = preg_replace( '/<script([^>]*)>(.*?)<\/script>/si', '<script data-type="lazy"$1></script>', $new_script );
 				}
 
@@ -708,13 +755,97 @@ class FileOptimizer {
 		 * @return {int} New value.
 		 * @since  3.0
 		 */
-		$delay_timeout = apply_filters( 'powered_cache_delayed_js_timeout', 5000 );
+		$delay_timeout  = apply_filters( 'powered_cache_delayed_js_timeout', 0 );
+		$script_content = file_get_contents( POWERED_CACHE_PATH . 'dist/js/script-loader.js' ); // phpcs:ignore
+
+		if ( ! $script_content ) {
+			return $html;
+		}
 
 		$html .= '<script id="powered-cache-delayed-js">';
-		$html .= 'const scriptLoader={loadDelay:' . absint( $delay_timeout ) . ',loadTimer:null,userInteractionEvents:["mouseover","click","keydown","wheel","touchmove","touchstart"],init(){for(const e of this.userInteractionEvents)window.addEventListener(e,this.triggerLoader,{passive:!0});this.loadTimer=setTimeout(this.loadScripts,this.loadDelay)},triggerLoader(){scriptLoader.loadScripts(),clearTimeout(scriptLoader.loadTimer);for(const e of scriptLoader.userInteractionEvents)window.removeEventListener(e,scriptLoader.triggerLoader,{passive:!0})},loadScripts(){document.querySelectorAll("script[data-type=\'lazy\']").forEach((e=>{e.setAttribute("src",e.getAttribute("data-src"))})),console.log("Script(s) loaded with delay")}};scriptLoader.init();';
+		$html .= 'window.PCScriptLoaderTimeout=' . absint( $delay_timeout ) . ';';
+		$html .= $script_content;
 		$html .= '</script>';
 
 		return $html;
+	}
+
+	/**
+	 * Defer jQuery depended inline scripts
+	 *
+	 * @param string $html Output buffer
+	 *
+	 * @return array|mixed|string|string[]|null
+	 * @since 3.2
+	 */
+	public function maybe_defer_inline_scripts( $html ) {
+		if ( ! $this->settings['js_defer'] ) {
+			return $html;
+		}
+
+		$html = preg_replace_callback(
+			'/(<script[^>]*>)(.*?)<\/script>/s',
+			function ( $matches ) {
+				$script_open_tag = $matches[1];
+				$script_content  = $matches[2];
+
+				if ( ! $this->should_defer_script( $script_content, $script_open_tag ) ) {
+					return $matches[0]; // Return the script unchanged
+				}
+
+				/**
+				 * Filters whether disable or not disable inline defer
+				 *
+				 * @hook   powered_cache_disable_js_defer_inline
+				 *
+				 * @param  {boolean} true to disable defer
+				 *
+				 * @return {boolean} New value.
+				 * @since  3.2
+				 */
+				if ( apply_filters( 'powered_cache_disable_js_defer_inline', false, $script_content, $script_open_tag ) ) {
+					return $matches[0]; // Return the script unchanged
+				}
+
+				return $script_open_tag . 'window.addEventListener("DOMContentLoaded", function() {(function($) {' . $script_content . '})(jQuery);});</script>';
+			},
+			$html
+		);
+
+		return $html;
+	}
+
+	/**
+	 * Determine whether defer or not defer inline script
+	 *
+	 * @param string $script_content Script content
+	 * @param string $script_attributes Script attributes
+	 *
+	 * @return bool
+	 * @since 3.2
+	 */
+	private function should_defer_script( $script_content, $script_attributes ) {
+		// Ignore scripts with a 'src' attribute (external scripts)
+		if ( false !== strpos( $script_attributes, 'src=' ) ) {
+			return false;
+		}
+
+		// ignore ld+json
+		if ( false !== strpos( $script_attributes, 'type="application/ld+json"' ) ) {
+			return false;
+		}
+
+		// Check if the script contains 'DOMContentLoaded' or 'document.write'
+		if ( false !== strpos( $script_content, 'DOMContentLoaded' ) || false !== strpos( $script_content, 'document.write' ) ) {
+			return false;
+		}
+
+		// Check if the script does NOT contain jQuery-related functions
+		if ( false === strpos( $script_content, 'jQuery(' ) && false === strpos( $script_content, '$.(' ) && false === strpos( $script_content, '$(' ) ) {
+			return false;
+		}
+
+		return true;
 	}
 
 

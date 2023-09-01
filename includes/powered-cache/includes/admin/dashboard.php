@@ -14,6 +14,7 @@ use PoweredCache\Config;
 use const PoweredCache\Constants\ICON_BASE64;
 use const PoweredCache\Constants\MENU_SLUG;
 use const PoweredCache\Constants\PURGE_CACHE_CRON_NAME;
+use const PoweredCache\Constants\PURGE_CACHE_PLUGIN_NOTICE_TRANSIENT;
 use const PoweredCache\Constants\SETTING_OPTION;
 use function PoweredCache\Utils\can_configure_htaccess;
 use function PoweredCache\Utils\can_configure_object_cache;
@@ -24,7 +25,6 @@ use function PoweredCache\Utils\get_available_object_caches;
 use function PoweredCache\Utils\get_cache_dir;
 use function PoweredCache\Utils\get_timeout_with_interval;
 use function PoweredCache\Utils\is_premium;
-use function PoweredCache\Utils\js_execution_methods;
 use function PoweredCache\Utils\powered_cache_flush;
 use function PoweredCache\Utils\remove_dir;
 use function PoweredCache\Utils\sanitize_css;
@@ -69,7 +69,7 @@ function setup() {
  * @see https://wpmudev.github.io/shared-ui/installation/
  */
 function add_sui_admin_body_class( $classes ) {
-	$classes .= ' sui-2-12-18 ';
+	$classes .= ' sui-2-12-20 ';
 
 	return $classes;
 }
@@ -133,7 +133,7 @@ function process_form_submit() {
 
 	$nonce = filter_input( INPUT_POST, 'powered_cache_settings_nonce', FILTER_SANITIZE_SPECIAL_CHARS );
 	if ( wp_verify_nonce( $nonce, 'powered_cache_update_settings' ) ) {
-		$action      = $_POST['powered_cache_form_action'] ? $_POST['powered_cache_form_action'] : 'save_settings';
+		$action      = isset( $_POST['powered_cache_form_action'] ) ? sanitize_text_field( wp_unslash( $_POST['powered_cache_form_action'] ) ) : 'save_settings';
 		$old_options = \PoweredCache\Utils\get_settings();
 		$options     = sanitize_options( $_POST );
 
@@ -171,8 +171,8 @@ function process_form_submit() {
 				echo $options; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				exit;
 			case 'import_settings':
-				if ( $_FILES['import_file'] && ! empty( $_FILES['import_file']['tmp_name'] ) ) {
-					$import_data     = file_get_contents( $_FILES['import_file']['tmp_name'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+				if ( $_FILES['import_file'] && ! empty( $_FILES['import_file']['tmp_name'] ) ) { // phpcs:ignore
+					$import_data     = file_get_contents( $_FILES['import_file']['tmp_name'] ); // phpcs:ignore
 					$import_settings = json_decode( $import_data, true );
 					$options         = sanitize_options( $import_settings );
 				}
@@ -232,8 +232,8 @@ function process_form_submit() {
 
 		$redirect_url = wp_get_referer();
 
-		if ( empty( $redirect_url ) ) {
-			$redirect_url = $_SERVER['REQUEST_URI'];
+		if ( empty( $redirect_url ) && isset( $_SERVER['REQUEST_URI'] ) ) {
+			$redirect_url = wp_unslash( $_SERVER['REQUEST_URI'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		}
 
 		$redirect_url = add_query_arg(
@@ -294,8 +294,10 @@ function sanitize_options( $options ) {
 	$sanitized_options['minify_js']                     = ! empty( $options['minify_js'] );
 	$sanitized_options['combine_js']                    = ! empty( $options['combine_js'] );
 	$sanitized_options['excluded_js_files']             = sanitize_textarea_field( $options['excluded_js_files'] );
-	$sanitized_options['js_execution_method']           = sanitize_text_field( $options['js_execution_method'] );
-	$sanitized_options['js_execution_optimized_only']   = ! empty( $options['js_execution_optimized_only'] );
+	$sanitized_options['js_defer']                      = ! empty( $options['js_defer'] );
+	$sanitized_options['js_defer_exclusions']           = sanitize_textarea_field( $options['js_defer_exclusions'] );
+	$sanitized_options['js_delay']                      = ! empty( $options['js_delay'] );
+	$sanitized_options['js_delay_exclusions']           = sanitize_textarea_field( $options['js_delay_exclusions'] );
 	$sanitized_options['enable_image_optimization']     = ! empty( $options['enable_image_optimization'] );
 	$sanitized_options['enable_lazy_load']              = ! empty( $options['enable_lazy_load'] );
 	$sanitized_options['lazy_load_post_content']        = ! empty( $options['lazy_load_post_content'] );
@@ -304,7 +306,9 @@ function sanitize_options( $options ) {
 	$sanitized_options['lazy_load_widgets']             = ! empty( $options['lazy_load_widgets'] );
 	$sanitized_options['lazy_load_post_thumbnail']      = ! empty( $options['lazy_load_post_thumbnail'] );
 	$sanitized_options['lazy_load_avatars']             = ! empty( $options['lazy_load_avatars'] );
+	$sanitized_options['lazy_load_skip_first_nth_img']  = absint( $options['lazy_load_skip_first_nth_img'] );
 	$sanitized_options['disable_wp_lazy_load']          = ! empty( $options['disable_wp_lazy_load'] );
+	$sanitized_options['add_missing_image_dimensions']  = ! empty( $options['add_missing_image_dimensions'] );
 	$sanitized_options['disable_wp_embeds']             = ! empty( $options['disable_wp_embeds'] );
 	$sanitized_options['disable_emoji_scripts']         = ! empty( $options['disable_emoji_scripts'] );
 	$sanitized_options['enable_cdn']                    = ! empty( $options['enable_cdn'] );
@@ -363,6 +367,7 @@ function sanitize_options( $options ) {
 	$sanitized_options['preload_sitemap']                = sanitize_textarea_field( $options['preload_sitemap'] );
 	$sanitized_options['prefetch_dns']                   = sanitize_textarea_field( $options['prefetch_dns'] );
 	$sanitized_options['preconnect_resource']            = sanitize_textarea_field( $options['preconnect_resource'] );
+	$sanitized_options['prefetch_links']                 = ! empty( $options['prefetch_links'] );
 	$sanitized_options['db_cleanup_post_revisions']      = ! empty( $options['db_cleanup_post_revisions'] );
 	$sanitized_options['db_cleanup_auto_drafts']         = ! empty( $options['db_cleanup_auto_drafts'] );
 	$sanitized_options['db_cleanup_trashed_posts']       = ! empty( $options['db_cleanup_trashed_posts'] );
@@ -482,7 +487,7 @@ function maybe_display_message() {
 	];
 
 	if ( isset( $_GET['language'] ) ) {
-		$success_messages['flush_lang_cache'] = sprintf( esc_html__( 'Page cache for %s language has been deleted!', 'powered-cache' ), esc_attr( urldecode_deep( $_GET['language'] ) ) );
+		$success_messages['flush_lang_cache'] = sprintf( esc_html__( 'Page cache for %s language has been deleted!', 'powered-cache' ), esc_attr( urldecode_deep( $_GET['language'] ) ) ); // phpcs:ignore
 	}
 
 	$err_messages = [
@@ -501,7 +506,7 @@ function maybe_display_message() {
 
 	if ( isset( $success_messages[ $_GET['pc_action'] ] ) ) {
 		if ( MENU_SLUG === $screen->parent_base ) { // display with shared-ui on plugin page
-			add_settings_error( $screen->parent_file, MENU_SLUG, $success_messages[ $_GET['pc_action'] ], 'success' );
+			add_settings_error( $screen->parent_file, MENU_SLUG, $success_messages[ $_GET['pc_action'] ], 'success' ); // phpcs:ignore
 
 			return;
 		}
@@ -511,7 +516,7 @@ function maybe_display_message() {
 
 	if ( isset( $err_messages[ $_GET['pc_action'] ] ) ) {
 		if ( MENU_SLUG === $screen->parent_base ) { // display with shared-ui on plugin page
-			add_settings_error( $screen->parent_file, MENU_SLUG, $err_messages[ $_GET['pc_action'] ], 'error' );
+			add_settings_error( $screen->parent_file, MENU_SLUG, $err_messages[ $_GET['pc_action'] ], 'error' ); // phpcs:ignore
 
 			return;
 		}
@@ -552,7 +557,7 @@ function purge_all_admin_bar_menu( $wp_admin_bar ) {
  */
 function purge_all_cache() {
 
-	if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'powered_cache_purge_all_cache' ) ) {
+	if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'powered_cache_purge_all_cache' ) ) { // phpcs:ignore
 		wp_nonce_ays( '' );
 	}
 
@@ -590,6 +595,12 @@ function purge_all_cache() {
 	 */
 	do_action( 'powered_cache_purge_all_cache' );
 
+	if ( POWERED_CACHE_IS_NETWORK ) {
+		delete_site_transient( PURGE_CACHE_PLUGIN_NOTICE_TRANSIENT );
+	} else {
+		delete_transient( PURGE_CACHE_PLUGIN_NOTICE_TRANSIENT );
+	}
+
 	$redirect_url = add_query_arg( 'pc_action', 'flush_all_cache', wp_get_referer() );
 
 	wp_safe_redirect( esc_url_raw( $redirect_url ) );
@@ -603,7 +614,7 @@ function purge_all_cache() {
  * @since 1.1
  */
 function download_rewrite_config() {
-	if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'powered_cache_download_rewrite' ) ) {
+	if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'powered_cache_download_rewrite' ) ) { // phpcs:ignore
 		wp_nonce_ays( '' );
 	}
 
@@ -613,8 +624,10 @@ function download_rewrite_config() {
 		exit;
 	}
 
-	$server = $_GET['server'];
-	Config::factory()->download_rewrite_rules( $server );
+	if ( ! empty( $_GET['server'] ) ) {
+		$server = sanitize_text_field( wp_unslash( $_GET['server'] ) );
+		Config::factory()->download_rewrite_rules( $server );
+	}
 
 	wp_safe_redirect( wp_get_referer() );
 	die();
@@ -682,7 +695,7 @@ function cancel_async_cache_cleaning() {
 function run_diagnostic() {
 	global $is_apache;
 
-	$nonce = $_POST['nonce'];
+	$nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( wp_unslash( $_POST['nonce'] ) ) : '';
 
 	if ( wp_verify_nonce( $nonce, 'powered_cache_run_diagnostic' ) ) {
 		$settings = \PoweredCache\Utils\get_settings();
@@ -795,7 +808,7 @@ function run_diagnostic() {
  * @since 1.0
  */
 function deactivate_plugin() {
-	if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'deactivate_plugin' ) ) {
+	if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'deactivate_plugin' ) ) { // phpcs:ignore
 		wp_nonce_ays( '' );
 	}
 
@@ -805,7 +818,10 @@ function deactivate_plugin() {
 		exit;
 	}
 
-	deactivate_plugins( $_GET['plugin'] );
+	if ( isset( $_GET['plugin'] ) ) {
+		$plugin = sanitize_text_field( wp_unslash( $_GET['plugin'] ) );
+		deactivate_plugins( $plugin );
+	}
 
 	wp_safe_redirect( wp_get_referer() );
 	die();

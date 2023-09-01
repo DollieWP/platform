@@ -15,7 +15,6 @@ use function PoweredCache\Utils\get_available_object_caches;
 use function PoweredCache\Utils\get_doc_url;
 use function PoweredCache\Utils\get_timeout_with_interval;
 use function PoweredCache\Utils\is_premium;
-use function PoweredCache\Utils\js_execution_methods;
 use function PoweredCache\Utils\sanitize_css;
 use function PoweredCache\Utils\scheduled_cleanup_frequency_options;
 
@@ -360,7 +359,7 @@ $settings = \PoweredCache\Utils\get_settings();
 										><?php echo esc_textarea( $settings['rejected_user_agents'] ); ?></textarea>
 										<span id="rejected_user_agents_description" class="sui-description">
 											<?php esc_html_e( 'Never send cached results for these user agents.', 'powered-cache' ); ?>
-											(<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'rejected-user-agents' ) ); ?>" target="_blank">?</a>)
+											<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'rejected-user-agents' ) ); ?>" target="_blank">(?)</a>
 										</span>
 									</div>
 								</div>
@@ -389,7 +388,7 @@ $settings = \PoweredCache\Utils\get_settings();
 												rows="5"
 										><?php echo esc_textarea( $settings['rejected_cookies'] ); ?></textarea>
 										<span id="rejected_cookies_description" class="sui-description"><?php esc_html_e( 'Never cache pages that use the specified cookies.', 'powered-cache' ); ?>
-											(<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'rejected-cookies' ) ); ?>" target="_blank">?</a>)
+											<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'rejected-cookies' ) ); ?>" target="_blank">(?)</a>
 										</span>
 									</div>
 								</div>
@@ -407,7 +406,7 @@ $settings = \PoweredCache\Utils\get_settings();
 							<div class="sui-row">
 								<div class="sui-col-md-8">
 									<div class="sui-form-field">
-										<label for="vary_cookies" class="sui-label"><i><?php esc_html_e( 'Enter vary cookies (one per line)', 'powered-cache' ); ?></i></label>
+										<label for="vary_cookies" id="vary_cookies_label" class="sui-label"><i><?php esc_html_e( 'Enter vary cookies (one per line)', 'powered-cache' ); ?></i></label>
 										<textarea
 												placeholder="(Eg: cookie_notice_accepted)"
 												id="vary_cookies"
@@ -418,7 +417,7 @@ $settings = \PoweredCache\Utils\get_settings();
 												rows="5"
 										><?php echo esc_textarea( $settings['vary_cookies'] ); ?></textarea>
 										<span id="vary_cookies_description" class="sui-description"><?php esc_html_e( 'Separate cache will be generated based on the cookie match.', 'powered-cache' ); ?>
-											(<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'vary-cookies' ) ); ?>" target="_blank">?</a>)
+											<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'vary-cookies' ) ); ?>" target="_blank">(?)</a>
 										</span>
 									</div>
 								</div>
@@ -447,7 +446,7 @@ $settings = \PoweredCache\Utils\get_settings();
 												rows="5"
 										><?php echo esc_textarea( $settings['rejected_uri'] ); ?></textarea>
 										<span id="rejected_uri_description" class="sui-description"><?php esc_html_e( 'Ignore the specified pages / directories. Supports regex.', 'powered-cache' ); ?>
-											(<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'ignored-pages' ) ); ?>" target="_blank">?</a>)
+											<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'ignored-pages' ) ); ?>" target="_blank">(?)</a>
 										</span>
 									</div>
 								</div>
@@ -474,7 +473,7 @@ $settings = \PoweredCache\Utils\get_settings();
 										><?php echo esc_textarea( $settings['cache_query_strings'] ); ?></textarea>
 										<span id="cache_query_strings_description" class="sui-description">
 											<?php esc_html_e( 'Powered Cache will create seperate caching file for the value of these query strings.', 'powered-cache' ); ?>
-											(<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'cache-query-strings' ) ); ?>" target="_blank">?</a>)
+											<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'cache-query-strings' ) ); ?>" target="_blank">(?)</a>
 										</span>
 									</div>
 								</div>
@@ -502,7 +501,7 @@ $settings = \PoweredCache\Utils\get_settings();
 										><?php echo esc_textarea( $settings['ignored_query_strings'] ); ?></textarea>
 										<span id="ignored_query_strings_description" class="sui-description">
 											<?php esc_html_e( 'Powered Cache will ignore these query string and serve the standard cache file. Tracking parameters such as utm_* ignored by default.', 'powered-cache' ); ?>
-											(<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'ignored-query-strings' ) ); ?>" target="_blank">?</a>)
+											<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'ignored-query-strings' ) ); ?>" target="_blank">(?)</a>
 										</span>
 									</div>
 								</div>
@@ -531,7 +530,7 @@ $settings = \PoweredCache\Utils\get_settings();
 										><?php echo esc_textarea( $settings['purge_additional_pages'] ); ?></textarea>
 										<span id="purge_additional_pages_description" class="sui-description">
 											<?php esc_html_e( 'Powered Cache is smart enough to purge only necessary pages during the post changes, however sometimes particular pages need to purge. (eg. the pages that use custom shortcode)', 'powered-cache' ); ?>
-											(<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'purge-additional-pages' ) ); ?>" target="_blank">?</a>)
+											<a href="<?php echo esc_url( get_doc_url( '/advanced-options/', 'purge-additional-pages' ) ); ?>" target="_blank">(?)</a>
 										</span>
 									</div>
 								</div>
@@ -606,7 +605,7 @@ $settings = \PoweredCache\Utils\get_settings();
 									<span id="combine_google_fonts_label" class="sui-toggle-label"><?php esc_html_e( 'Combine Google Fonts', 'powered-cache' ); ?></span>
 									<span id="combine-google-fonts-description" class="sui-description">
 										<?php esc_html_e( 'Combines all Google Fonts URLs into a single URL and optimizes loading of that URL.', 'powered-cache' ); ?>
-										(<a href="<?php echo esc_url( get_doc_url( '/combine-google-fonts/' ) ); ?>" target="_blank">?</a>)
+										<a href="<?php echo esc_url( get_doc_url( '/combine-google-fonts/' ) ); ?>" target="_blank">(?)</a>
 									</span>
 								</label>
 							</div>
@@ -653,7 +652,7 @@ $settings = \PoweredCache\Utils\get_settings();
 					<div class="<?php echo esc_attr( apply_filters( 'powered_cache_admin_page_fo_css_classes', 'sui-box-settings-row ' ) ); ?>">
 						<div class="sui-box-settings-col-1">
 							<span class="sui-settings-label"><?php esc_html_e( 'CSS Optimization', 'powered-cache' ); ?>
-								(<a href="<?php echo esc_url( get_doc_url( '/css-optimization/' ) ); ?>" target="_blank">?</a>)
+								<a href="<?php echo esc_url( get_doc_url( '/css-optimization/' ) ); ?>" target="_blank">(?)</a>
 							</span>
 						</div>
 
@@ -700,7 +699,6 @@ $settings = \PoweredCache\Utils\get_settings();
 												id="excluded_css_files"
 												name="excluded_css_files"
 												class="sui-form-control"
-												aria-labelledby="label-unique-id"
 												aria-describedby="excluded_css_files_description"
 												rows="5"
 										><?php echo esc_textarea( $settings['excluded_css_files'] ); ?></textarea>
@@ -717,7 +715,7 @@ $settings = \PoweredCache\Utils\get_settings();
 						<div class="<?php echo esc_attr( apply_filters( 'powered_cache_admin_page_fo_critical_css_classes', 'sui-box-settings-row ' ) ); ?> <?php echo( ! is_premium() ? 'sui-disabled' : '' ); ?>">
 							<div class="sui-box-settings-col-1">
 								<span class="sui-settings-label"><?php esc_html_e( 'Critical CSS', 'powered-cache' ); ?>
-									(<a href="<?php echo esc_url( get_doc_url( '/critical-css/' ) ); ?>" target="_blank">?</a>)
+									<a href="<?php echo esc_url( get_doc_url( '/critical-css/' ) ); ?>" target="_blank">(?)</a>
 									<?php if ( ! is_premium() ) : ?>
 										<span class="sui-tag sui-tag-pro"><?php esc_html_e( 'Premium', 'powered-cache' ); ?></span>
 									<?php endif; ?>
@@ -748,12 +746,11 @@ $settings = \PoweredCache\Utils\get_settings();
 								<div class="sui-row">
 									<div class="sui-col-md-8">
 										<div class="sui-form-field">
-											<label for="additional_critical_css_files" class="sui-label"><i><?php esc_html_e( 'Additonal files to critical (one per line)', 'powered-cache' ); ?></i></label>
+											<label for="critical_css_additional_files" class="sui-label"><i><?php esc_html_e( 'Additonal files to critical (one per line)', 'powered-cache' ); ?></i></label>
 											<textarea
 													id="critical_css_additional_files"
 													name="critical_css_additional_files"
 													class="sui-form-control"
-													aria-labelledby="label-unique-id"
 													aria-describedby="critical_css_additional_files_description"
 													rows="5"
 											><?php echo  esc_textarea( $settings['critical_css_additional_files'] ); // phpcs:ignore ?></textarea>
@@ -771,7 +768,6 @@ $settings = \PoweredCache\Utils\get_settings();
 													id="critical_css_excluded_files"
 													name="critical_css_excluded_files"
 													class="sui-form-control"
-													aria-labelledby="label-unique-id"
 													aria-describedby="critical_css_excluded_files_description"
 													rows="5"
 											><?php echo esc_textarea( $settings['critical_css_excluded_files'] ); // phpcs:ignore ?></textarea>
@@ -789,7 +785,6 @@ $settings = \PoweredCache\Utils\get_settings();
 													id="critical_css_appended_content"
 													name="critical_css_appended_content"
 													class="sui-form-control"
-													aria-labelledby="label-unique-id"
 													aria-describedby="critical_css_appended_content_description"
 													rows="5"
 											><?php echo wp_unslash( sanitize_css( $settings['critical_css_appended_content'] ) ); // phpcs:ignore ?></textarea>
@@ -807,7 +802,6 @@ $settings = \PoweredCache\Utils\get_settings();
 													id="critical_css_fallback"
 													name="critical_css_fallback"
 													class="sui-form-control"
-													aria-labelledby="label-unique-id"
 													aria-describedby="critical_css_fallback_description"
 													rows="5"
 											><?php echo wp_unslash( sanitize_css( $settings['critical_css_fallback'] ) ); // phpcs:ignore ?></textarea>
@@ -827,7 +821,7 @@ $settings = \PoweredCache\Utils\get_settings();
 					<div class="<?php echo esc_attr( apply_filters( 'powered_cache_admin_page_fo_ucss_classes', 'sui-box-settings-row ' ) ); ?> <?php echo( ! is_premium() ? 'sui-disabled' : '' ); ?>">
 						<div class="sui-box-settings-col-1">
 							<span class="sui-settings-label"><?php esc_html_e( 'Unused CSS', 'powered-cache' ); ?>
-								(<a href="<?php echo esc_url( get_doc_url( '/remove-unused-css/' ) ); ?>" target="_blank">?</a>)
+								<a href="<?php echo esc_url( get_doc_url( '/remove-unused-css/' ) ); ?>" target="_blank">(?)</a>
 								<?php if ( ! is_premium() ) : ?>
 									<span class="sui-tag sui-tag-pro"><?php esc_html_e( 'Premium', 'powered-cache' ); ?></span>
 								<?php endif; ?>
@@ -862,7 +856,6 @@ $settings = \PoweredCache\Utils\get_settings();
 												id="ucss_safelist"
 												name="ucss_safelist"
 												class="sui-form-control"
-												aria-labelledby="label-unique-id"
 												aria-describedby="ucss_safelist_description"
 												rows="5"
 											><?php echo  esc_textarea( $settings['ucss_safelist'] ); // phpcs:ignore ?></textarea>
@@ -880,7 +873,6 @@ $settings = \PoweredCache\Utils\get_settings();
 												id="ucss_excluded_files"
 												name="ucss_excluded_files"
 												class="sui-form-control"
-												aria-labelledby="label-unique-id"
 												aria-describedby="ucss_excluded_files_description"
 												rows="5"
 											><?php echo  esc_textarea( $settings['ucss_excluded_files'] ); // phpcs:ignore ?></textarea>
@@ -900,7 +892,7 @@ $settings = \PoweredCache\Utils\get_settings();
 					<div class="<?php echo esc_attr( apply_filters( 'powered_cache_admin_page_fo_js_classes', 'sui-box-settings-row ' ) ); ?>">
 						<div class="sui-box-settings-col-1">
 							<span class="sui-settings-label"><?php esc_html_e( 'JavaScript Optimization', 'powered-cache' ); ?>
-								(<a href="<?php echo esc_url( get_doc_url( '/js-optimization/' ) ); ?>" target="_blank">?</a>)
+								<a href="<?php echo esc_url( get_doc_url( '/js-optimization/' ) ); ?>" target="_blank">(?)</a>
 							</span>
 						</div>
 
@@ -913,6 +905,7 @@ $settings = \PoweredCache\Utils\get_settings();
 											id="minify_js"
 											name="minify_js"
 											aria-labelledby="minify_js_label"
+											aria-controls="excluded_js_files_field"
 											value="1"
 										<?php checked( 1, $settings['minify_js'] ); ?>
 									>
@@ -925,80 +918,146 @@ $settings = \PoweredCache\Utils\get_settings();
 							<div class="sui-form-field">
 								<label for="combine_js" class="sui-toggle">
 									<input
-											type="checkbox"
-											id="combine_js"
-											name="combine_js"
-											aria-labelledby="combine_js_label"
-											value="1"
+										type="checkbox"
+										id="combine_js"
+										name="combine_js"
+										aria-labelledby="combine_js_label"
+										value="1"
 										<?php checked( 1, $settings['combine_js'] ); ?>
+										<?php disabled( false, ( $settings['minify_js'] && ! $settings['js_delay'] ) ); ?>
 									>
 									<span class="sui-toggle-slider" aria-hidden="true"></span>
 									<span id="combine_js_label" class="sui-toggle-label"><?php esc_html_e( 'Combine JavaScript Files', 'powered-cache' ); ?></span>
-									<span id="combine_js_description" class="sui-description"><?php esc_html_e( 'Combines JS files into fewer files to reduce HTTP requests.', 'powered-cache' ); ?></span>
+									<span id="combine_js_description" class="sui-description"><?php esc_html_e( 'Combines JS files into fewer files to reduce HTTP requests. If your site is using HTTP/2, it is not recommended to proceed with this option.', 'powered-cache' ); ?></span>
+									<div role="alert" class="sui-notice sui-notice-blue sui-active" aria-live="assertive" style="display: block;">
+										<div class="sui-notice-content">
+											<div class="sui-notice-message">
+												<span class="sui-notice-icon sui-icon-info sui-md" aria-hidden="true"></span>
+												<p>
+													<?php esc_html_e( 'For compatibility reasons, this option will only work when delayed JavaScript execution is not activated and it requires minification to be enabled.', 'powered-cache' ); ?>
+												</p>
+											</div>
+										</div>
+									</div>
 								</label>
 							</div>
 
-							<div class="sui-row">
-								<div class="sui-col-md-8">
-									<div class="sui-form-field">
-										<label for="excluded_js_files" class="sui-label"><i><?php esc_html_e( 'JavaScript files to exclude (one per line)', 'powered-cache' ); ?></i></label>
+							<div style=" <?php echo( ! $settings['minify_js'] ? 'display:none' : '' ); ?>" class="sui-form-field" tabindex="0" id="excluded_js_files_field">
+								<div class="sui-row">
+									<div class="sui-col-md-8">
+										<label for="excluded_js_files" class="sui-label"><i><?php esc_html_e( 'Exclusions', 'powered-cache' ); ?></i></label>
 										<textarea
-												placeholder="e.g /wp-content/themes/example/js/custom.js"
-												id="excluded_js_files"
-												name="excluded_js_files"
-												class="sui-form-control"
-												aria-labelledby="label-unique-id"
-												aria-describedby="excluded_js_files_description"
-												rows="5"
+											placeholder="e.g /wp-content/themes/example/js/custom.js"
+											id="excluded_js_files"
+											name="excluded_js_files"
+											class="sui-form-control"
+											aria-describedby="excluded_js_files_description"
+											rows="5"
 										><?php echo esc_textarea( $settings['excluded_js_files'] ); ?></textarea>
 										<span id="excluded_js_files_description" class="sui-description">
-											<?php esc_html_e( 'Listed files will not get minified or combined', 'powered-cache' ); ?>
+											<?php esc_html_e( 'JavaScript files to exclude. Listed files will not get minified or combined (one per line).', 'powered-cache' ); ?>
+											<?php echo wp_kses_post( __( 'You can use <i>(.*)</i> for matching all files for a path.', 'powered-cache' ) ); ?>
+											<a href="<?php echo esc_url( get_doc_url( '/js-optimization/' ) ); ?>" target="_blank">(?)</a>
 										</span>
 									</div>
+								</div>
+							</div>
+
+							<div class="sui-form-field">
+								<label for="js_defer" class="sui-toggle">
+									<input
+										type="checkbox"
+										id="js_defer"
+										name="js_defer"
+										aria-labelledby="js_defer_label"
+										aria-controls="js_defer_exclusions_field"
+										value="1"
+										<?php checked( 1, $settings['js_defer'] ); ?>
+									>
+									<span class="sui-toggle-slider" aria-hidden="true"></span>
+									<span id="js_defer_label" class="sui-toggle-label"><?php esc_html_e( 'Load JavaScript deferred', 'powered-cache' ); ?></span>
+									<span id="js_defer_description" class="sui-description"><?php esc_html_e( 'Avoid render-blocking scripts by deferring them.', 'powered-cache' ); ?></span>
+								</label>
+							</div>
+
+							<div style=" <?php echo( ! $settings['js_defer'] ? 'display:none' : '' ); ?>" class="sui-form-field" tabindex="0" id="js_defer_exclusions_field">
+								<div class="sui-row">
+									<div class="sui-col-md-8">
+											<label for="js_defer_exclusions" class="sui-label"><i><?php esc_html_e( 'Exclusions', 'powered-cache' ); ?></i></label>
+											<textarea
+												placeholder="e.g /wp-content/plugins/example/js/(.*)"
+												id="js_defer_exclusions"
+												name="js_defer_exclusions"
+												class="sui-form-control"
+												aria-describedby="js_defer_exclusions_description"
+												rows="5"
+											><?php echo esc_textarea( $settings['js_defer_exclusions'] ); // phpcs:ignore ?></textarea>
+											<span id="js_defer_exclusions_description" class="sui-description">
+												<?php esc_html_e( 'Listed files will not get deferred (one per line).', 'powered-cache' ); ?>
+												<?php echo wp_kses_post( __( 'You can use <i>(.*)</i> for matching all files for a path.', 'powered-cache' ) ); ?>
+											</span>
+									</div>
+
+								</div>
+							</div>
+
+
+							<div class="sui-form-field">
+								<label for="js_delay" class="sui-toggle">
+									<input
+										type="checkbox"
+										id="js_delay"
+										name="js_delay"
+										aria-labelledby="js_delay_label"
+										aria-controls="js_delay_exclusions_field"
+										value="1"
+										<?php
+                                        checked( 1, $settings['js_delay'] );
+										?>
+									>
+									<span class="sui-toggle-slider" aria-hidden="true"></span>
+									<span id="js_delay_label" class="sui-toggle-label"><?php esc_html_e( 'Delay JavaScript execution', 'powered-cache' ); ?></span>
+									<span id="js_delay_description" class="sui-description"><?php esc_html_e( 'Execute scripts following user interactions such as mouse movements, keyboard inputs, or scrolling. This technique enhances the page\'s loading time and boosts overall performance.', 'powered-cache' ); ?></span>
+								</label>
+							</div>
+
+							<div class="sui-form-field" style=" <?php echo( ! $settings['js_delay'] ? 'display:none' : '' ); ?>" tabindex="0" id="js_delay_exclusions_field">
+								<div class="sui-row">
+									<div class="sui-col-md-8">
+											<label for="js_delay_exclusions" class="sui-label"><i><?php esc_html_e( 'Exclusions', 'powered-cache' ); ?></i></label>
+											<textarea
+												placeholder="e.g /wp-content/themes/example/js/(.*)"
+												id="js_delay_exclusions"
+												name="js_delay_exclusions"
+												class="sui-form-control"
+												aria-describedby="js_delay_exclusions_description"
+												rows="5"
+											><?php echo esc_textarea( $settings['js_delay_exclusions'] ); // phpcs:ignore ?></textarea>
+											<span id="js_delay_exclusions_description" class="sui-description">
+												<?php esc_html_e( 'Listed files will not get delayed (one per line).', 'powered-cache' ); ?>
+												<?php echo wp_kses_post( __( 'You can use <i>(.*)</i> for matching all files for a path.', 'powered-cache' ) ); ?>
+											</span>
+									</div>
+								</div>
+								<div class="sui-row">
+									<div class="sui-col-md-8">
+										<span for="js-delay-default-exclusions" class="sui-label"><i><?php esc_html_e( 'If you have problems after enabling delay JavaScript execution, you can copy-paste following exceptions and see if the problem resolved.', 'powered-cache' ); ?></i></span>
+										<pre class="sui-code-snippet" id="js-delay-default-exclusions">
+/wp-content(.*)
+/wp-includes(.*)
+js-(before|after|extra)</pre>
+									</div>
+									<span id="js_delay_exclusions_description" class="sui-description">
+										<?php esc_html_e( 'These rules will skip delays for JavaScript files loaded through WordPress core, themes, and plugins.', 'powered-cache' ); ?>
+										<a href="<?php echo esc_url( get_doc_url( '/js-execution/' ) ); ?>" target="_blank">(?)</a>
+									</span>
 								</div>
 							</div>
 
 						</div>
 					</div>
 
-					<div class="<?php echo esc_attr( apply_filters( 'powered_cache_admin_page_fo_js_classes', 'sui-box-settings-row ' ) ); ?>">
-						<div class="sui-box-settings-col-1">
-							<span class="sui-settings-label" id="js_execution_method_label">
-								<?php esc_html_e( 'JavaScript Execution', 'powered-cache' ); ?>
-								(<a href="<?php echo esc_url( get_doc_url( '/js-execution/' ) ); ?>" target="_blank">?</a>)
-							</span>
-							<span class="sui-description"></span>
-						</div>
-						<div class="sui-box-settings-col-2">
-							<div class="sui-form-field">
-								<select id="js_execution_method" name="js_execution_method" aria-labelledby="js_execution_method_label" aria-describedby="js_execution_method_description">
-									<?php foreach ( js_execution_methods() as $method => $name ) : ?>
-										<option <?php selected( $settings['js_execution_method'], esc_attr( $method ) ); ?> value="<?php echo esc_attr( $method ); ?>"><?php echo esc_attr( $name ); ?></option>
-									<?php endforeach; ?>
-								</select>
 
-								<span id="js_execution_method_description" class="sui-description"><?php esc_html_e( 'It determines how browsers execute the JS scripts.', 'powered-cache' ); ?></span>
-							</div>
-
-							<div class="sui-form-field">
-								<label for="js_execution_optimized_only" class="sui-toggle">
-									<input
-											type="checkbox"
-											id="js_execution_optimized_only"
-											name="js_execution_optimized_only"
-											aria-labelledby="js_execution_optimized_only_label"
-											value="1"
-										<?php checked( 1, $settings['js_execution_optimized_only'] ); ?>
-									>
-									<span class="sui-toggle-slider" aria-hidden="true"></span>
-									<span id="js_execution_optimized_only_label" class="sui-toggle-label"><?php esc_html_e( 'Use execution method for the optimized scripts only', 'powered-cache' ); ?></span>
-									<span id="js_execution_optimized_only_description" class="sui-description"><?php esc_html_e( 'When this option is turned off all JS scripts will be executed in the same way.', 'powered-cache' ); ?></span>
-								</label>
-							</div>
-
-						</div>
-
-					</div>
 				</div>
 
 				<div class="sui-box-footer">
@@ -1026,8 +1085,6 @@ $settings = \PoweredCache\Utils\get_settings();
 							<span class="sui-settings-label"><?php esc_html_e( 'Image Optimization', 'powered-cache' ); ?>
 								<?php if ( ! is_premium() ) : ?>
 									<span class="sui-tag sui-tag-pro"><?php esc_html_e( 'Premium', 'powered-cache' ); ?></span>
-								<?php else : ?>
-									<span class="sui-tag sui-tag-pro"><?php esc_html_e( 'Beta', 'powered-cache' ); ?></span>
 								<?php endif; ?>
 							</span>
 							<span class="sui-description"></span>
@@ -1047,8 +1104,8 @@ $settings = \PoweredCache\Utils\get_settings();
 									>
 									<span class="sui-toggle-slider" aria-hidden="true"></span>
 									<span id="enable_image_optimization_label" class="sui-toggle-label"><?php esc_html_e( 'Enable Image Optimization Service', 'powered-cache' ); ?></span>
-									<span id="enable_image_optimization_description" class="sui-description"><?php esc_html_e( 'Powered Cache image optimization service instantly optimizes images from our global network of servers. The images will be served in WebP format when browsers support the WebP.', 'powered-cache' ); ?>
-										(<a href="<?php echo esc_url( get_doc_url( '/image-optimization/' ) ); ?>" target="_blank">?</a>)
+									<span id="enable_image_optimization_description" class="sui-description"><?php esc_html_e( "Our image optimization service instantly optimizes images from our global network of servers. Images will be served in the AVIF format when supported by the user's browser. If AVIF is not supported, the WebP format will be used as a fallback, ensuring efficient loading and high-quality visuals.", 'powered-cache' ); ?>
+										<a href="<?php echo esc_url( get_doc_url( '/image-optimization/' ) ); ?>" target="_blank">(?)</a>
 									</span>
 								</label>
 							</div>
@@ -1063,7 +1120,7 @@ $settings = \PoweredCache\Utils\get_settings();
 							<span class="sui-settings-label"><?php esc_html_e( 'Lazy Load', 'powered-cache' ); ?></span>
 							<span class="sui-description">
 								<?php esc_html_e( 'Loads images and iframes only when visible to the user.', 'powered-cache' ); ?>
-								(<a href="<?php echo esc_url( get_doc_url( '/enable-lazy-load/' ) ); ?>" target="_blank">?</a>)
+								<a href="<?php echo esc_url( get_doc_url( '/enable-lazy-load/' ) ); ?>" target="_blank">(?)</a>
 							</span>
 						</div>
 
@@ -1086,103 +1143,123 @@ $settings = \PoweredCache\Utils\get_settings();
 									</label>
 								</div>
 
-								<div style=" <?php echo( ! $settings['enable_lazy_load'] ? 'display:none' : '' ); ?>" tabindex="0" id="lazy-load-details" class="sui-toggle-content sui-border-frame">
+								<div style="<?php echo( ! $settings['enable_lazy_load'] ? 'display:none' : '' ); ?>" tabindex="0" id="lazy-load-details">
+									<div class="sui-border-frame">
+										<div class="sui-form-field">
+											<div class="sui-row">
+												<label for="lazy_load_post_content" class="sui-checkbox">
 
-									<div class="sui-form-field">
-										<div class="sui-row">
-											<label for="lazy_load_post_content" class="sui-checkbox">
-
-												<input
+													<input
 														type="checkbox"
 														id="lazy_load_post_content"
 														name="lazy_load_post_content"
 														value="1"
-													<?php checked( 1, $settings['lazy_load_post_content'] ); ?>
-												>
+														<?php checked( 1, $settings['lazy_load_post_content'] ); ?>
+													>
 
-												<span aria-hidden="true"></span>
-												<span id="lazy_load_post_content_label"><?php esc_html_e( 'Enable for post content.', 'powered-cache' ); ?></span>
-											</label>
-										</div>
+													<span aria-hidden="true"></span>
+													<span id="lazy_load_post_content_label"><?php esc_html_e( 'Enable for post content.', 'powered-cache' ); ?></span>
+												</label>
+											</div>
 
-										<div class="sui-row">
-											<label for="lazy_load_images" class="sui-checkbox">
+											<div class="sui-row">
+												<label for="lazy_load_images" class="sui-checkbox">
 
-												<input
+													<input
 														type="checkbox"
 														id="lazy_load_images"
 														name="lazy_load_images"
 														value="1"
-													<?php checked( 1, $settings['lazy_load_images'] ); ?>
-												>
+														<?php checked( 1, $settings['lazy_load_images'] ); ?>
+													>
 
-												<span aria-hidden="true"></span>
-												<span id="lazy_load_images_label"><?php esc_html_e( 'Enable for images.', 'powered-cache' ); ?></span>
-											</label>
-										</div>
+													<span aria-hidden="true"></span>
+													<span id="lazy_load_images_label"><?php esc_html_e( 'Enable for images.', 'powered-cache' ); ?></span>
+												</label>
+											</div>
 
-										<div class="sui-row">
-											<label for="lazy_load_iframes" class="sui-checkbox">
+											<div class="sui-row">
+												<label for="lazy_load_iframes" class="sui-checkbox">
 
-												<input
+													<input
 														type="checkbox"
 														id="lazy_load_iframes"
 														name="lazy_load_iframes"
 														value="1"
-													<?php checked( 1, $settings['lazy_load_iframes'] ); ?>
-												>
+														<?php checked( 1, $settings['lazy_load_iframes'] ); ?>
+													>
 
-												<span aria-hidden="true"></span>
-												<span id="lazy_load_iframes_label"><?php esc_html_e( 'Enable for iframes.', 'powered-cache' ); ?></span>
-											</label>
-										</div>
-										<div class="sui-row">
-											<label for="lazy_load_widgets" class="sui-checkbox">
+													<span aria-hidden="true"></span>
+													<span id="lazy_load_iframes_label"><?php esc_html_e( 'Enable for iframes.', 'powered-cache' ); ?></span>
+												</label>
+											</div>
+											<div class="sui-row">
+												<label for="lazy_load_widgets" class="sui-checkbox">
 
-												<input
+													<input
 														type="checkbox"
 														id="lazy_load_widgets"
 														name="lazy_load_widgets"
 														value="1"
-													<?php checked( 1, $settings['lazy_load_widgets'] ); ?>
-												>
+														<?php checked( 1, $settings['lazy_load_widgets'] ); ?>
+													>
 
-												<span aria-hidden="true"></span>
-												<span id="lazy_load_widgets_label"><?php esc_html_e( 'Enable for widgets.', 'powered-cache' ); ?></span>
-											</label>
-										</div>
-										<div class="sui-row">
-											<label for="lazy_load_post_thumbnail" class="sui-checkbox">
+													<span aria-hidden="true"></span>
+													<span id="lazy_load_widgets_label"><?php esc_html_e( 'Enable for widgets.', 'powered-cache' ); ?></span>
+												</label>
+											</div>
+											<div class="sui-row">
+												<label for="lazy_load_post_thumbnail" class="sui-checkbox">
 
-												<input
+													<input
 														type="checkbox"
 														id="lazy_load_post_thumbnail"
 														name="lazy_load_post_thumbnail"
 														value="1"
-													<?php checked( 1, $settings['lazy_load_post_thumbnail'] ); ?>
-												>
+														<?php checked( 1, $settings['lazy_load_post_thumbnail'] ); ?>
+													>
 
-												<span aria-hidden="true"></span>
-												<span id="lazy_load_post_thumbnail_label"><?php esc_html_e( 'Enable for post thumbnails.', 'powered-cache' ); ?></span>
-											</label>
-										</div>
-										<div class="sui-row">
-											<label for="lazy_load_avatars" class="sui-checkbox">
+													<span aria-hidden="true"></span>
+													<span id="lazy_load_post_thumbnail_label"><?php esc_html_e( 'Enable for post thumbnails.', 'powered-cache' ); ?></span>
+												</label>
+											</div>
+											<div class="sui-row">
+												<label for="lazy_load_avatars" class="sui-checkbox">
 
-												<input
+													<input
 														type="checkbox"
 														id="lazy_load_avatars"
 														name="lazy_load_avatars"
 														value="1"
-													<?php checked( 1, $settings['lazy_load_avatars'] ); ?>
-												>
+														<?php checked( 1, $settings['lazy_load_avatars'] ); ?>
+													>
 
-												<span aria-hidden="true"></span>
-												<span id="lazy_load_avatars_label"><?php esc_html_e( 'Enable for avatars.', 'powered-cache' ); ?></span>
-											</label>
+													<span aria-hidden="true"></span>
+													<span id="lazy_load_avatars_label"><?php esc_html_e( 'Enable for avatars.', 'powered-cache' ); ?></span>
+												</label>
+											</div>
 										</div>
 									</div>
+									<div class="sui-border-frame">
 
+										<div class="sui-form-field">
+											<label for="lazy_load_skip_first_nth_img" id="lazy_load_skip_first_nth_img-label">
+												<?php esc_html_e( 'Lazy Load from nth image', 'powered-cache' ); ?>
+											</label>
+											<input
+												name="lazy_load_skip_first_nth_img"
+												value="<?php echo absint( $settings['lazy_load_skip_first_nth_img'] ); ?>"
+												id="lazy_load_skip_first_nth_img"
+												class="sui-form-control sui-field-has-suffix"
+												type="number"
+												min="0"
+												max="30"
+											/>
+											<div class="sui-description">
+												<?php esc_html_e( 'Do not lazy load the first X images. This value can be modified to prevent the lazy loading of above-the-fold images, which otherwise could negatively affect the Largest Contentful Paint (LCP).', 'powered-cache' ); ?>
+											</div>
+										</div>
+									</div>
 								</div>
 
 								<div class="sui-row">
@@ -1202,6 +1279,39 @@ $settings = \PoweredCache\Utils\get_settings();
 							</div>
 						</div>
 
+					</div>
+
+					<div class="sui-box-settings-row <?php echo( ! is_premium() ? 'sui-disabled' : '' ); ?>">
+						<div class="sui-box-settings-col-1">
+							<span class="sui-settings-label"><?php esc_html_e( 'Image Dimensions', 'powered-cache' ); ?>
+								<?php if ( ! is_premium() ) : ?>
+									<span class="sui-tag sui-tag-pro"><?php esc_html_e( 'Premium', 'powered-cache' ); ?></span>
+								<?php endif; ?>
+							</span>
+							<span class="sui-description"></span>
+						</div>
+
+						<div class="sui-box-settings-col-2">
+							<div class="sui-form-field">
+								<label for="add_missing_image_dimensions" class="sui-toggle">
+									<input
+										type="checkbox"
+										id="add_missing_image_dimensions"
+										name="add_missing_image_dimensions"
+										aria-labelledby="add_missing_image_dimensions_label"
+										aria-describedby="add_missing_image_dimensions_description"
+										value="1"
+										<?php checked( 1, $settings['add_missing_image_dimensions'] ); ?>
+										<?php echo( ! is_premium() ? 'disabled="disabled"' : '' ); ?>
+									>
+									<span class="sui-toggle-slider" aria-hidden="true"></span>
+									<span id="add_missing_image_dimensions_label" class="sui-toggle-label"><?php esc_html_e( 'Add missing image dimensions.', 'powered-cache' ); ?></span>
+									<span id="add_missing_image_dimensions_description" class="sui-description"><?php esc_html_e( 'Adds missing width and height attributes into images, potentially preventing layout shifts and enhancing the experience for your visitors.', 'powered-cache' ); ?>
+										<a href="<?php echo esc_url( get_doc_url( '/image-dimensions/' ) ); ?>" target="_blank">(?)</a>
+									</span>
+								</label>
+							</div>
+						</div>
 					</div>
 
 					<div class="sui-box-settings-row">
@@ -1226,7 +1336,7 @@ $settings = \PoweredCache\Utils\get_settings();
 									<span class="sui-toggle-slider" aria-hidden="true"></span>
 									<span id="disable_wp_embeds_label" class="sui-toggle-label"><?php esc_html_e( 'Disable WordPress Embeds', 'powered-cache' ); ?></span>
 									<span id="disable_wp_embeds_description" class="sui-description"><?php esc_html_e( 'Disables embedding posts from WordPress-based websites (including your own) which converts URLs into heavy iframes.', 'powered-cache' ); ?>
-										(<a href="<?php echo esc_url( get_doc_url( '/disable-wordpress-embeds/' ) ); ?>" target="_blank">?</a>)
+										<a href="<?php echo esc_url( get_doc_url( '/disable-wordpress-embeds/' ) ); ?>" target="_blank">(?)</a>
 									</span>
 								</label>
 							</div>
@@ -1256,7 +1366,7 @@ $settings = \PoweredCache\Utils\get_settings();
 									<span id="disable_emoji_scripts_label" class="sui-toggle-label"><?php esc_html_e( 'Remove Emoji Scripts', 'powered-cache' ); ?></span>
 									<span id="disable_emoji_scripts_description" class="sui-description">
 										<?php esc_html_e( 'Removes the unnecessary emoji scripts from your website front-end. Doesn\'t remove emojis, don\'t worry.', 'powered-cache' ); ?>
-										(<a href="<?php echo esc_url( get_doc_url( '/remove-emoji-scripts/' ) ); ?>" target="_blank">?</a>)
+										<a href="<?php echo esc_url( get_doc_url( '/remove-emoji-scripts/' ) ); ?>" target="_blank">(?)</a>
 									</span>
 								</label>
 							</div>
@@ -1303,7 +1413,8 @@ $settings = \PoweredCache\Utils\get_settings();
 									<span class="sui-toggle-slider" aria-hidden="true"></span>
 									<span id="enable_cdn_label" class="sui-toggle-label"><?php esc_html_e( 'Enable CDN Integration', 'powered-cache' ); ?></span>
 									<span id="enable_cdn_description" class="sui-description"><?php esc_html_e( 'Please make sure that your CDN is properly setup before enabling this feature ', 'powered-cache' ); ?>
-										<a href="<?php echo esc_url( get_doc_url( '/cdn-integration/' ) ); ?>" target="_blank">(?)</a></span>
+										<a href="<?php echo esc_url( get_doc_url( '/cdn-integration/' ) ); ?>" target="_blank">(?)</a>
+									</span>
 								</label>
 							</div>
 						</div>
@@ -1330,11 +1441,11 @@ $settings = \PoweredCache\Utils\get_settings();
 
 								<?php foreach ( $settings['cdn_hostname'] as $key => $cdn ) : ?>
 									<div id="cdn-zone-<?php echo absint( $key ); ?>" class="cdn-zone sui-form-field">
-										<input id="cdn_hostname" value="<?php echo esc_attr( $cdn ); ?>" name="cdn_hostname[]" style="width: 300px" placeholder="cdn.example.org" class="cdn_hostname sui-form-control sui-input-md sui-field-has-suffix" aria-labelledby="label-unique-id">
+										<input id="cdn_hostname_<?php echo absint( $key ); ?>" value="<?php echo esc_attr( $cdn ); ?>" name="cdn_hostname[]" style="width: 300px" placeholder="cdn.example.org" class="cdn_hostname sui-form-control sui-input-md sui-field-has-suffix">
 										<span><?php esc_html_e( 'for', 'powered-cache' ); ?></span>
 										<span class="sui-field-suffix" style="width: 120px">
 											<div class="sui-form-field sui-input-md">
-												<select id="cdn_zone" name="cdn_zone[]" class="sui-form-control cdn_zone">
+												<select id="cdn_zone_<?php echo absint( $key ); ?>" name="cdn_zone[]" class="sui-form-control cdn_zone">
 													<?php foreach ( cdn_zones() as $zone => $zone_name ) : ?>
 														<option <?php selected( $settings['cdn_zone'][ $key ], $zone ); ?> value="<?php echo esc_attr( $zone ); ?>"><?php echo esc_attr( $zone_name ); ?></option>
 													<?php endforeach; ?>
@@ -1419,7 +1530,7 @@ $settings = \PoweredCache\Utils\get_settings();
 							<span class="sui-settings-label"><?php esc_html_e( 'Cache Preload', 'powered-cache' ); ?></span>
 							<span class="sui-description">
 								<?php esc_html_e( 'Preloading will visit pages based on the settings and generate cache, just like any other visitor to the site.', 'powered-cache' ); ?>
-								(<a href="<?php echo esc_url( get_doc_url( '/enable-preloading/' ) ); ?>" target="_blank">?</a>)
+								<a href="<?php echo esc_url( get_doc_url( '/enable-preloading/' ) ); ?>" target="_blank">(?)</a>
 							</span>
 						</div>
 
@@ -1552,7 +1663,7 @@ $settings = \PoweredCache\Utils\get_settings();
 											><?php echo esc_textarea( $settings['preload_sitemap'] ); ?></textarea>
 											<span id="preload_sitemap_description" class="sui-description">
 												<?php esc_html_e( 'Preload the urls in listed sitemaps.', 'powered-cache' ); ?>
-												(<a href="<?php echo esc_url( get_doc_url( '/sitemap-preloading/' ) ); ?>" target="_blank">?</a>)
+												<a href="<?php echo esc_url( get_doc_url( '/sitemap-preloading/' ) ); ?>" target="_blank">(?)</a>
 											</span>
 										</div>
 
@@ -1584,7 +1695,7 @@ $settings = \PoweredCache\Utils\get_settings();
 										><?php echo esc_textarea( $settings['prefetch_dns'] ); ?></textarea>
 										<span id="prefetch_dns_description" class="sui-description">
 											<?php esc_html_e( 'DNS-prefetch would reduce DNS lookup time.', 'powered-cache' ); ?>
-											(<a href="<?php echo esc_url( get_doc_url( '/prefetch-dns/' ) ); ?>" target="_blank">?</a>)
+											<a href="<?php echo esc_url( get_doc_url( '/prefetch-dns/' ) ); ?>" target="_blank">(?)</a>
 										</span>
 									</div>
 								</div>
@@ -1613,7 +1724,7 @@ $settings = \PoweredCache\Utils\get_settings();
 										><?php echo esc_textarea( $settings['preconnect_resource'] ); ?></textarea>
 										<span id="preconnect_resource_description" class="sui-description">
 											<?php esc_html_e( 'The preconnect hint is best used for only the most critical connections.', 'powered-cache' ); ?>
-											(<a href="<?php echo esc_url( get_doc_url( '/preconnect-resources/' ) ); ?>" target="_blank">?</a>)
+											<a href="<?php echo esc_url( get_doc_url( '/preconnect-resources/' ) ); ?>" target="_blank">(?)</a>
 										</span>
 									</div>
 								</div>
@@ -1621,6 +1732,38 @@ $settings = \PoweredCache\Utils\get_settings();
 						</div>
 
 
+					</div>
+
+					<div class="sui-box-settings-row <?php echo( ! is_premium() ? 'sui-disabled' : '' ); ?>">
+						<div class="sui-box-settings-col-1">
+							<span class="sui-settings-label"><?php esc_html_e( 'Prefetch links', 'powered-cache' ); ?>
+								<?php if ( ! is_premium() ) : ?>
+									<span class="sui-tag sui-tag-pro"><?php esc_html_e( 'Premium', 'powered-cache' ); ?></span>
+								<?php endif; ?>
+							</span>
+							<span class="sui-description"></span>
+						</div>
+
+						<div class="sui-box-settings-col-2">
+							<div class="sui-form-field">
+								<label for="prefetch_links" class="sui-toggle">
+									<input
+										type="checkbox"
+										id="prefetch_links"
+										name="prefetch_links"
+										aria-labelledby="prefetch_links_label"
+										aria-describedby="prefetch_links_description"
+										value="1"
+										<?php checked( 1, $settings['prefetch_links'] ); ?>
+									>
+									<span class="sui-toggle-slider" aria-hidden="true"></span>
+									<span id="prefetch_links_label" class="sui-toggle-label"><?php esc_html_e( 'Enable link prefetching', 'powered-cache' ); ?></span>
+									<span id="prefetch_links_description" class="sui-description"><?php esc_html_e( 'Faster subsequent page-loads by prefetching or prerendering in-viewport links during idle time.', 'powered-cache' ); ?>
+										<a href="<?php echo esc_url( get_doc_url( '/prefetch-links/' ) ); ?>" target="_blank">(?)</a>
+									</span>
+								</label>
+							</div>
+						</div>
 					</div>
 
 
@@ -1886,7 +2029,7 @@ $settings = \PoweredCache\Utils\get_settings();
 
 							<div class="sui-box-settings-col-2">
 								<div class="sui-form-field">
-									<label for="enable_scheduled_db_cleanup" class="sui-toggle">
+									<label for="enable_scheduled_db_cleanup" id="enable_scheduled_db_cleanup_label" class="sui-toggle">
 										<input
 												type="checkbox"
 												id="enable_scheduled_db_cleanup"
@@ -2107,7 +2250,7 @@ $settings = \PoweredCache\Utils\get_settings();
 										</label>
 									</div>
 									<div id="heartbeat-dashboard-interval-control" style="<?php echo( ! ( 'modify' === $settings['heartbeat_dashboard_status'] ) ? 'display:none' : '' ); ?>">
-										<label for="heartbeat-dashboard" id="heartbeat-dashboard-label" class="sui-label"><?php esc_html_e( 'Heartbeat Interval for Dashboard', 'powered-cache' ); ?></label>
+										<label for="heartbeat_dashboard_interval" id="heartbeat-dashboard-label" class="sui-label"><?php esc_html_e( 'Heartbeat Interval for Dashboard', 'powered-cache' ); ?></label>
 										<div class="sui-form-field">
 											<input
 													name="heartbeat_dashboard_interval"
@@ -2172,7 +2315,7 @@ $settings = \PoweredCache\Utils\get_settings();
 										</label>
 									</div>
 									<div id="heartbeat-editor-interval-control" style="<?php echo( ! ( 'modify' === $settings['heartbeat_editor_status'] ) ? 'display:none' : '' ); ?>">
-										<label for="heartbeat-editor" id="heartbeat-editor-label" class="sui-label"><?php esc_html_e( 'Heartbeat Interval for Post Editor', 'powered-cache' ); ?></label>
+										<label for="heartbeat_editor_interval" id="heartbeat-editor-label" class="sui-label"><?php esc_html_e( 'Heartbeat Interval for Post Editor', 'powered-cache' ); ?></label>
 										<div class="sui-form-field">
 											<input
 													name="heartbeat_editor_interval"
@@ -2235,7 +2378,7 @@ $settings = \PoweredCache\Utils\get_settings();
 									</div>
 
 									<div id="heartbeat-frontend-interval-control" style="<?php echo( ! ( 'modify' === $settings['heartbeat_frontend_status'] ) ? 'display:none' : '' ); ?>">
-										<label for="heartbeat-frontend" id="heartbeat-frontend-label" class="sui-label"><?php esc_html_e( 'Heartbeat Interval for Dashboard', 'powered-cache' ); ?></label>
+										<label for="heartbeat_frontend_interval" id="heartbeat-frontend-label" class="sui-label"><?php esc_html_e( 'Heartbeat Interval for Dashboard', 'powered-cache' ); ?></label>
 										<div class="sui-form-field">
 											<input
 													name="heartbeat_frontend_interval"
@@ -2334,7 +2477,7 @@ $settings = \PoweredCache\Utils\get_settings();
 								<?php endif; ?>
 								<div class="sui-actions-right">
 									<div class="sui-form-field">
-										<label for="enable_google_tracking" class="sui-toggle">
+										<label for="enable_google_tracking" id="enable_google_tracking_label" class="sui-toggle">
 											<input
 												<?php echo( ! is_premium() ? 'disabled="disabled"' : '' ); ?>
 													type="checkbox"
@@ -2444,7 +2587,7 @@ $settings = \PoweredCache\Utils\get_settings();
 
 						<div class="sui-box-settings-col-2">
 							<div class="sui-form-field">
-								<label for="cache_footprint" class="sui-toggle">
+								<label for="cache_footprint" id="cache_footprint_label" class="sui-toggle">
 									<input
 											type="checkbox"
 											id="cache_footprint"
@@ -2473,7 +2616,7 @@ $settings = \PoweredCache\Utils\get_settings();
 
 						<div class="sui-box-settings-col-2">
 							<div class="sui-form-field">
-								<label for="async_cache_cleaning" class="sui-toggle">
+								<label for="async_cache_cleaning" id="async_cache_cleaning_label" class="sui-toggle">
 									<input
 											type="checkbox"
 											id="async_cache_cleaning"

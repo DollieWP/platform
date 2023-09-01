@@ -112,8 +112,7 @@ class Helper {
 	 * @return bool
 	 */
 	public static function is_excluded_js( $src ) {
-		$settings       = \PoweredCache\Utils\get_settings();
-		$excluded_files = preg_split( '#(\r\n|\n|\r)#', $settings['excluded_js_files'], - 1, PREG_SPLIT_NO_EMPTY );
+		$excluded_files = self::get_excluded_js();
 		$excluded_files = implode( '|', $excluded_files );
 
 		if ( ! empty( $excluded_files ) && preg_match( '#(' . $excluded_files . ')#', $src ) ) {
@@ -131,8 +130,7 @@ class Helper {
 	 * @return bool
 	 */
 	public static function is_excluded_css( $src ) {
-		$settings       = \PoweredCache\Utils\get_settings();
-		$excluded_files = preg_split( '#(\r\n|\n|\r)#', $settings['excluded_css_files'], - 1, PREG_SPLIT_NO_EMPTY );
+		$excluded_files = self::get_excluded_css();
 		$excluded_files = implode( '|', $excluded_files );
 
 		if ( ! empty( $excluded_files ) && preg_match( '#(' . $excluded_files . ')#', $src ) ) {
@@ -141,5 +139,142 @@ class Helper {
 
 		return false;
 	}
+
+	/**
+	 * Check if excluded or not from defer
+	 *
+	 * @param string $tag Script tag
+	 *
+	 * @return bool
+	 */
+	public static function is_defer_excluded( $tag ) {
+		$excluded_files = self::get_defer_exclusions();
+		$excluded_files = implode( '|', $excluded_files );
+
+		if ( false !== stripos( $tag, 'data-no-defer' ) ) {
+			return true;
+		}
+
+		if ( ! empty( $excluded_files ) && preg_match( '#(' . $excluded_files . ')#', $tag ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Check if excluded or not from delay
+	 *
+	 * @param string $tag Script tag
+	 *
+	 * @return bool
+	 */
+	public static function is_delay_excluded( $tag ) {
+		$excluded_files = self::get_delay_exclusions();
+		$excluded_files = implode( '|', $excluded_files );
+
+		if ( false !== stripos( $tag, 'data-no-delay' ) ) {
+			return true;
+		}
+
+		if ( ! empty( $excluded_files ) && preg_match( '#(' . $excluded_files . ')#', $tag ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Get defer exclusion list
+	 *
+	 * @return array
+	 * @since 3.2
+	 */
+	public static function get_defer_exclusions() {
+		$settings       = \PoweredCache\Utils\get_settings();
+		$excluded_files = preg_split( '#(\r\n|\n|\r)#', $settings['js_defer_exclusions'], - 1, PREG_SPLIT_NO_EMPTY );
+
+		/**
+		 * Filter the defer exclusions
+		 *
+		 * @hook   powered_cache_defer_exclusions
+		 *
+		 * @param  {array} $settings Excluded files
+		 *
+		 * @return {array} New value
+		 * @since  3.2
+		 */
+		return (array) apply_filters( 'powered_cache_defer_exclusions', $excluded_files );
+	}
+
+	/**
+	 * Get delay exclusion list
+	 *
+	 * @return array
+	 * @since 3.2
+	 */
+	public static function get_delay_exclusions() {
+		$settings       = \PoweredCache\Utils\get_settings();
+		$excluded_files = preg_split( '#(\r\n|\n|\r)#', $settings['js_delay_exclusions'], - 1, PREG_SPLIT_NO_EMPTY );
+
+		/**
+		 * Filter the delay exclusions
+		 *
+		 * @hook   powered_cache_delay_exclusions
+		 *
+		 * @param  {array} $settings Excluded files
+		 *
+		 * @return {array} New value
+		 * @since  3.2
+		 */
+		return (array) apply_filters( 'powered_cache_delay_exclusions', $excluded_files );
+	}
+
+	/**
+	 * Get JS exclusion list
+	 *
+	 * @return array
+	 * @since 3.2
+	 */
+	public static function get_excluded_js() {
+		$settings       = \PoweredCache\Utils\get_settings();
+		$excluded_files = preg_split( '#(\r\n|\n|\r)#', $settings['excluded_js_files'], - 1, PREG_SPLIT_NO_EMPTY );
+
+		/**
+		 * Filter the excluded JS files
+		 *
+		 * @hook   powered_cache_fo_excluded_js_files
+		 *
+		 * @param  {array} $settings Excluded files
+		 *
+		 * @return {array} New value
+		 * @since  3.2
+		 */
+		return (array) apply_filters( 'powered_cache_fo_excluded_js_files', $excluded_files );
+	}
+
+	/**
+	 * Get CSS exclusion list
+	 *
+	 * @return array
+	 * @since 3.2
+	 */
+	public static function get_excluded_css() {
+		$settings       = \PoweredCache\Utils\get_settings();
+		$excluded_files = preg_split( '#(\r\n|\n|\r)#', $settings['excluded_css_files'], - 1, PREG_SPLIT_NO_EMPTY );
+
+		/**
+		 * Filter the excluded css files
+		 *
+		 * @hook   powered_cache_fo_excluded_css_files
+		 *
+		 * @param  {array} $settings Excluded files
+		 *
+		 * @return {array} New value
+		 * @since  3.2
+		 */
+		return (array) apply_filters( 'powered_cache_fo_excluded_css_files', $excluded_files );
+	}
+
 
 }

@@ -13,6 +13,7 @@ use function PoweredCache\Utils\clean_page_cache_dir;
 use function PoweredCache\Utils\clean_site_cache_dir;
 use function PoweredCache\Utils\delete_page_cache;
 use function PoweredCache\Utils\get_post_related_urls;
+use const PoweredCache\Constants\PURGE_CACHE_PLUGIN_NOTICE_TRANSIENT;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
@@ -136,7 +137,7 @@ class AdvancedCache {
 	 * @since 2.0
 	 */
 	public function purge_page_cache_network_wide() {
-		if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'powered_cache_purge_page_cache_network' ) ) {
+		if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'powered_cache_purge_page_cache_network' ) ) { // phpcs:ignore
 			wp_nonce_ays( '' );
 		}
 
@@ -152,6 +153,8 @@ class AdvancedCache {
 			$redirect_url = add_query_arg( 'pc_action', 'flush_page_cache_network_err_permission', wp_get_referer() );
 		}
 
+		delete_site_transient( PURGE_CACHE_PLUGIN_NOTICE_TRANSIENT );
+
 		wp_safe_redirect( esc_url_raw( $redirect_url ) );
 		exit;
 	}
@@ -163,7 +166,7 @@ class AdvancedCache {
 	 * @since 1.1 clean site dir instead of root page caching dir
 	 */
 	public function purge_page_cache() {
-		if ( ! wp_verify_nonce( $_GET['_wpnonce'], 'powered_cache_purge_page_cache' ) ) {
+		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'powered_cache_purge_page_cache' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 			wp_nonce_ays( '' );
 		}
 
@@ -181,6 +184,8 @@ class AdvancedCache {
 		} else {
 			$redirect_url = add_query_arg( 'pc_action', 'flush_page_cache_err_permission', wp_get_referer() );
 		}
+
+		delete_transient( PURGE_CACHE_PLUGIN_NOTICE_TRANSIENT );
 
 		wp_safe_redirect( esc_url_raw( $redirect_url ) );
 		exit;

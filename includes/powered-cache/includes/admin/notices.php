@@ -11,6 +11,8 @@ use function PoweredCache\Utils\can_configure_htaccess;
 use function PoweredCache\Utils\can_configure_object_cache;
 use function PoweredCache\Utils\can_control_all_settings;
 use function PoweredCache\Utils\get_object_cache_dropins;
+use function PoweredCache\Utils\is_premium;
+use const PoweredCache\Constants\PURGE_CACHE_PLUGIN_NOTICE_TRANSIENT;
 
 /**
  * Default setup routine
@@ -23,12 +25,18 @@ function setup() {
 		add_action( 'network_admin_notices', __NAMESPACE__ . '\\maybe_display_advanced_cache_notices' );
 		add_action( 'network_admin_notices', __NAMESPACE__ . '\\maybe_display_object_cache_notices' );
 		add_action( 'network_admin_notices', __NAMESPACE__ . '\\maybe_display_htaccess_notice' );
+		add_action( 'network_admin_notices', __NAMESPACE__ . '\\maybe_display_purge_cache_plugin_notice' );
 	} else {
 		add_action( 'admin_notices', __NAMESPACE__ . '\\maybe_display_plugin_compatability_notices' );
 		add_action( 'admin_notices', __NAMESPACE__ . '\\maybe_display_advanced_cache_notices' );
 		add_action( 'admin_notices', __NAMESPACE__ . '\\maybe_display_object_cache_notices' );
 		add_action( 'admin_notices', __NAMESPACE__ . '\\maybe_display_htaccess_notice' );
+		add_action( 'admin_notices', __NAMESPACE__ . '\\maybe_display_purge_cache_plugin_notice' );
 	}
+
+	add_action( 'activated_plugin', __NAMESPACE__ . '\\observe_plugin_changes', 10, 2 );
+	add_action( 'deactivated_plugin', __NAMESPACE__ . '\\observe_plugin_changes', 10, 2 );
+	add_action( 'admin_post_powered_cache_dismiss_notice', __NAMESPACE__ . '\\dismiss_notice' );
 }
 
 /**
@@ -37,6 +45,8 @@ function setup() {
  * @since 1.0
  */
 function maybe_display_plugin_compatability_notices() {
+	$settings = \PoweredCache\Utils\get_settings();
+
 	$plugins = array(
 		'hummingbird-performance'           => 'hummingbird-performance/wp-hummingbird.php',
 		'wp-rocket'                         => 'wp-rocket/wp-rocket.php',
@@ -53,7 +63,17 @@ function maybe_display_plugin_compatability_notices() {
 		'speed-booster-pack'                => 'speed-booster-pack/speed-booster-pack.php',
 		'wp-performance-score-booster'      => 'wp-performance-score-booster/wp-performance-score-booster.php',
 		'check-and-enable-gzip-compression' => 'check-and-enable-gzip-compression/richards-toolbox.php',
+		'swift-performance-lite'            => 'swift-performance-lite/performance.php',
+		'swift-performance'                 => 'swift-performance/performance.php',
+		'litespeed-cache'                   => 'litespeed-cache/litespeed-cache.php',
+		'wp-optimize'                       => 'wp-optimize/wp-optimize.php',
 	);
+
+	if ( $settings['prefetch_links'] && is_premium() ) {
+		$plugins['quicklink']    = 'quicklink/quicklink.php';
+		$plugins['flying-pages'] = 'flying-pages/flying-pages.php';
+		$plugins['instant-page'] = 'instant-page/instantpage.php';
+	}
 
 	$callback = POWERED_CACHE_IS_NETWORK ? 'is_plugin_active_for_network' : 'is_plugin_active';
 
@@ -66,7 +86,7 @@ function maybe_display_plugin_compatability_notices() {
 
 	<?php if ( current_user_can( 'activate_plugins' ) ) : ?>
 		<div class="error">
-			<p><?php esc_html_e( 'The following plugins are not compatible with  Powered Cache and may cause unintended results:', 'powered-cache' ); ?></p>
+			<p><?php esc_html_e( 'The following plugins are not compatible with Powered Cache and may cause unintended results:', 'powered-cache' ); ?></p>
 			<ul class="incompatible-plugin-list">
 				<?php
 				foreach ( $plugins as $plugin ) {
@@ -299,4 +319,92 @@ function maybe_display_htaccess_notice() {
 	</div>
 
 	<?php
+}
+
+/**
+ * Observe new plugin activation/deactivation
+ *
+ * @param string  $plugin       file
+ * @param boolean $network_wide Whether plugin de/activated network wide or not
+ *
+ * @return void
+ * @since 3.2
+ */
+function observe_plugin_changes( $plugin, $network_wide ) {
+	if ( false !== stripos( $plugin, 'powered-cache' ) ) {
+		return;
+	}
+
+	if ( $network_wide ) {
+		set_site_transient( PURGE_CACHE_PLUGIN_NOTICE_TRANSIENT, '1' );
+
+		return;
+	}
+
+	set_transient( PURGE_CACHE_PLUGIN_NOTICE_TRANSIENT, '1' );
+}
+
+/**
+ * Display cache purging notice upon a new plugin activated/deactivated
+ *
+ * @return void
+ * @since 3.2
+ */
+function maybe_display_purge_cache_plugin_notice() {
+	$has_notice = false;
+
+	if ( POWERED_CACHE_IS_NETWORK && current_user_can( 'manage_network' ) ) {
+		$has_notice = get_site_transient( PURGE_CACHE_PLUGIN_NOTICE_TRANSIENT );
+		$purge_url  = wp_nonce_url( admin_url( 'admin-post.php?action=powered_cache_purge_page_cache_network' ), 'powered_cache_purge_page_cache_network' );
+	} elseif ( current_user_can( 'activate_plugins' ) ) {
+		$has_notice = get_transient( PURGE_CACHE_PLUGIN_NOTICE_TRANSIENT );
+		$purge_url  = wp_nonce_url( admin_url( 'admin-post.php?action=powered_cache_purge_all_cache' ), 'powered_cache_purge_all_cache' );
+	}
+
+	if ( $has_notice ) {
+		$message = __( '<strong>Powered Cache:</strong> One or more plugins have been activated or deactivated; consider clearing the cache if these changes impact your site\'s front end.', 'powered-cache' );
+		?>
+		<div class="notice notice-warning is-dismissible">
+			<p>
+				<?php echo wp_kses_post( $message ); ?>
+			</p>
+			<p>
+				<a href="<?php echo esc_url_raw( $purge_url ); ?>" class="button-primary">
+					<?php esc_html_e( 'Purge Cache', 'powered-cache' ); ?>
+				</a>
+				<a href="<?php echo esc_url_raw( wp_nonce_url( admin_url( 'admin-post.php?action=powered_cache_dismiss_notice&notice=' . PURGE_CACHE_PLUGIN_NOTICE_TRANSIENT ), 'powered_cache_dismiss_notice' ) ); ?>" class="button-secondary">
+					<?php esc_html_e( 'Dismiss this notice', 'powered-cache' ); ?>
+				</a>
+			</p>
+			<a href="<?php echo esc_url_raw( wp_nonce_url( admin_url( 'admin-post.php?action=powered_cache_dismiss_notice&notice=' . PURGE_CACHE_PLUGIN_NOTICE_TRANSIENT ), 'powered_cache_dismiss_notice' ) ); ?>" type="button" class="notice-dismiss" style="text-decoration:none;">
+				<span class="screen-reader-text"><?php esc_html_e( 'Dismiss this notice', 'powered-cache' ); ?></span>
+			</a>
+		</div>
+		<?php
+	}
+}
+
+/**
+ * Dismis given notice
+ *
+ * @return void
+ * @since 3.2
+ */
+function dismiss_notice() {
+	if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'powered_cache_dismiss_notice' ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+		wp_nonce_ays( '' );
+	}
+
+	if ( current_user_can( 'manage_options' ) && ! empty( $_GET['notice'] ) ) {
+		$notice = sanitize_text_field( wp_unslash( $_GET['notice'] ) );
+
+		if ( POWERED_CACHE_IS_NETWORK ) {
+			delete_site_transient( $notice );
+		} else {
+			delete_transient( $notice );
+		}
+	}
+
+	wp_safe_redirect( esc_url_raw( wp_get_referer() ) );
+	exit;
 }

@@ -51,7 +51,8 @@ class LazyLoad {
 			add_action( 'wp', [ $this, 'init' ], 9999 ); // run this as late as possible
 			add_action( 'powered_cache_lazy_load_compat', [ $this, 'compat' ] );
 			add_action( 'powered_cache_lazy_load_run_filter', [ $this, 'maybe_disable_through_meta' ] );
-			add_filter( 'powered_cache_delayed_js_skip', [ $this, 'maybe_delayed_js_skip' ], 10, 2 );
+			add_filter( 'powered_cache_delayed_js_skip', [ $this, 'delayed_js_skip' ], 10, 2 );
+			add_filter( 'powered_cache_fo_excluded_js_files', [ $this, 'add_file_optimizer_exclusion' ] );
 		}
 
 		/**
@@ -125,8 +126,27 @@ class LazyLoad {
 		 */
 		$threshold = apply_filters( 'powered_cache_lazy_load_threshold', 200 );
 
-		if ( 200 !== (int) $threshold ) {
-			wp_localize_script( 'PCLL', 'PCLL_options', array( 'threshold' => $threshold ) );
+		/**
+		 * Filters the count of images that skipped from lazyload.
+		 *
+		 * @hook   powered_cache_lazy_load_skip_first_nth_img
+		 *
+		 * @param  {int} $immediate_load_count Default image count
+		 *
+		 * @return {int} New value
+		 * @since  3.1
+		 */
+		$immediate_load_count = apply_filters( 'powered_cache_lazy_load_skip_first_nth_img', $this->settings['lazy_load_skip_first_nth_img'] );
+
+		if ( 200 !== (int) $threshold || 3 !== (int) $immediate_load_count ) {
+			wp_localize_script(
+				'PCLL',
+				'PCLL_options',
+				[
+					'threshold'            => $threshold,
+					'immediate_load_count' => $immediate_load_count,
+				]
+			);
 		}
 	}
 
@@ -462,7 +482,7 @@ class LazyLoad {
 			add_filter( 'powered_cache_lazy_load_enabled', '__return_false' );
 		}
 
-		if ( isset( $_SERVER['HTTP_USER_AGENT'] ) && false !== strpos( $_SERVER['HTTP_USER_AGENT'], 'Opera Mini' ) ) {
+		if ( isset( $_SERVER['HTTP_USER_AGENT'] ) && false !== strpos( $_SERVER['HTTP_USER_AGENT'], 'Opera Mini' ) ) { // phpcs:ignore
 			add_filter( 'powered_cache_lazy_load_enabled', '__return_false' );
 		}
 
@@ -500,12 +520,25 @@ class LazyLoad {
 	 *
 	 * @return boolean
 	 */
-	public function maybe_delayed_js_skip( $is_delay_skipped, $script ) {
-		if ( false !== stripos( $script, POWERED_CACHE_URL . 'dist/js/lazyload.js' ) ) {
+	public function delayed_js_skip( $is_delay_skipped, $script ) {
+		if ( false !== stripos( $script, 'powered-cache/dist/js/lazyload.js' ) || false !== stripos( $script, 'PCLL_' ) ) {
 			return true;
 		}
 
 		return $is_delay_skipped;
+	}
+
+	/**
+	 * Exclude link preloader from file optimizer
+	 *
+	 * @param array $excluded_files the list of excluded files for optimization
+	 *
+	 * @return mixed
+	 */
+	public function add_file_optimizer_exclusion( $excluded_files ) {
+		$excluded_files[] = POWERED_CACHE_URL . 'dist/js/lazyload.js';
+
+		return $excluded_files;
 	}
 
 }

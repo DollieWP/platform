@@ -81,10 +81,15 @@ function get_settings( $force_network_wide = false ) {
 		'minify_js'                      => false,
 		'combine_js'                     => false,
 		'excluded_js_files'              => '',
-		'js_execution_method'            => 'blocking',
-		'js_execution_optimized_only'    => true,
+		'js_execution_method'            => 'blocking', // deprecated @since 3.2
+		'js_defer'                       => false,
+		'js_defer_exclusions'            => '',
+		'js_delay'                       => false,
+		'js_delay_exclusions'            => '',
+		'js_execution_optimized_only'    => true,   // deprecated @since 3.2
 		// media optimization
 		'enable_image_optimization'      => false,
+		'add_missing_image_dimensions'   => false,
 		// lazyload
 		'enable_lazy_load'               => false,
 		'lazy_load_post_content'         => true,
@@ -93,6 +98,7 @@ function get_settings( $force_network_wide = false ) {
 		'lazy_load_widgets'              => true,
 		'lazy_load_post_thumbnail'       => true,
 		'lazy_load_avatars'              => true,
+		'lazy_load_skip_first_nth_img'   => 3,
 		'disable_wp_lazy_load'           => false,
 		'disable_wp_embeds'              => false,
 		'disable_emoji_scripts'          => false,
@@ -110,6 +116,7 @@ function get_settings( $force_network_wide = false ) {
 		'preload_sitemap'                => '',
 		'prefetch_dns'                   => '',
 		'preconnect_resource'            => '',
+		'prefetch_links'                 => true,
 		// db options
 		'db_cleanup_post_revisions'      => false,
 		'db_cleanup_auto_drafts'         => false,
@@ -189,7 +196,6 @@ function get_cache_dir() {
  *
  * @return array $object_caches
  * @since 1.2 apcu added
- *
  * @since 1.0
  */
 function get_object_cache_dropins() {
@@ -351,6 +357,8 @@ function can_configure_object_cache() {
 /**
  * Supported js execution methods
  *
+ * @depreacated since 3.2
+ *
  * @return mixed|void
  */
 function js_execution_methods() {
@@ -494,7 +502,6 @@ function settings_errors( $setting = '', $sanitize = false, $hide_on_update = fa
 
 /**
  * remove directories recursively
- *
  * Adopted from W3TC Utility
  *
  * @param string $path    The target path
@@ -875,7 +882,6 @@ function cdn_addresses() {
 	 * @param  {array} $cdn_addresses CDN Adresses.
 	 *
 	 * @return {array} New value.
-	 *
 	 * @since  1.0
 	 */
 	return apply_filters( 'powered_cache_cdn_addresses', $cdn_addresses );
@@ -937,7 +943,6 @@ function powered_cache_flush() {
 	 * Fires after cache flush.
 	 *
 	 * @hook   powered_cache_flushed
-	 *
 	 * @since  1.0
 	 */
 	do_action( 'powered_cache_flushed' );
@@ -969,7 +974,6 @@ function log( $message ) {
 	 * @param  {string} $log_message The log message.
 	 *
 	 * @return {string} New value.
-	 *
 	 * @since  2.0
 	 */
 	$log_message = apply_filters( 'powered_cache_log_message', $log_message );
@@ -982,7 +986,6 @@ function log( $message ) {
 	 * @param  {null|int} null default message type
 	 *
 	 * @return {null|int} New value.
-	 *
 	 * @since  2.0
 	 */
 	$message_type = apply_filters( 'powered_cache_log_message_type', null );
@@ -1001,7 +1004,6 @@ function log( $message ) {
 	 * @param  {null|string} $destination The destination of the log.
 	 *
 	 * @return {null|string} New value.
-	 *
 	 * @since  2.0
 	 */
 	$log_destination = apply_filters( 'powered_cache_log_destination', $destination );
@@ -1021,10 +1023,12 @@ function log( $message ) {
  */
 function get_client_ip() {
 	if ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-		return $_SERVER['HTTP_X_FORWARDED_FOR'];
+		return wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 	}
 
-	return $_SERVER['REMOTE_ADDR'];
+	if ( isset( $_SERVER['REMOTE_ADDR'] ) ) {
+		return wp_unslash( $_SERVER['REMOTE_ADDR'] );  // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+	}
 }
 
 /**
@@ -1118,7 +1122,6 @@ function get_response_headers() {
 	 * @param  {array} $known_headers The list of known HTTP headers.
 	 *
 	 * @return {array} New value.
-	 *
 	 * @since  1.2
 	 */
 	$known_headers = apply_filters( 'powered_cache_known_headers', $known_headers );
@@ -1277,7 +1280,13 @@ function powered_cache_is_mobile() {
 	$mobile_browsers = addcslashes( implode( '|', preg_split( '/[\s*,\s*]*,+[\s*,\s*]*/', $powered_cache_mobile_browsers ) ), ' ' );
 	$mobile_prefixes = addcslashes( implode( '|', preg_split( '/[\s*,\s*]*,+[\s*,\s*]*/', $powered_cache_mobile_prefixes ) ), ' ' );
 
-	if ( ( preg_match( '#^.*(' . $mobile_browsers . ').*#i', $_SERVER['HTTP_USER_AGENT'] ) || preg_match( '#^(' . $mobile_prefixes . ').*#i', substr( $_SERVER['HTTP_USER_AGENT'], 0, 4 ) ) ) ) {
+	if ( ! isset( $_SERVER['HTTP_USER_AGENT'] ) ) {
+		return false;
+	}
+
+	$user_agent = wp_unslash( $_SERVER['HTTP_USER_AGENT'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+	if ( ( preg_match( '#^.*(' . $mobile_browsers . ').*#i', $user_agent ) || preg_match( '#^(' . $mobile_prefixes . ').*#i', substr( $user_agent, 0, 4 ) ) ) ) {
 		return true;
 	}
 
@@ -1340,7 +1349,7 @@ function is_local_site() {
  * @since 3.0
  */
 function bypass_request() {
-	if ( isset( $_GET['nopoweredcache'] ) && $_GET['nopoweredcache'] ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+	if ( isset( $_GET['nopoweredcache'] ) && $_GET['nopoweredcache'] ) { // phpcs:ignore
 		return true;
 	}
 
