@@ -91,6 +91,7 @@ class ExternalHost extends BaseHost {
 		$partner_hash = '';
 
 		if ( defined( 'WPD_PARTNER_ID' ) && ! empty( WPD_PARTNER_ID ) && strpos( WPD_PARTNER_ID, '[[' ) === false ) {
+			update_option( 'wpd_connection_partner_hash', WPD_PARTNER_ID );
 			return WPD_PARTNER_ID;
 		}
 
