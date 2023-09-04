@@ -24,7 +24,7 @@ class Admin extends Singleton {
 
 	public function enqueue_assets() {
 		wp_enqueue_style( 'wpd-admin', PLATFORM_PLUGIN_URL . 'assets/dst/admin.css' );
-		wp_enqueue_script( 'alpinejs', PLATFORM_PLUGIN_URL . 'assets/js/alpine.min.js', array(), null, true );
+		wp_enqueue_script( 'alpine', PLATFORM_PLUGIN_URL . 'assets/js/alpine.min.js', array(), null, true );
 	}
 
 	public function ajax_callback_remove_site() {
@@ -43,8 +43,10 @@ class Admin extends Singleton {
 
 		$signature = sha1( Plugin::instance()->get_host()->get_token() . Plugin::instance()->get_host()->get_partner_hash() );
 
+		$api_host = defined( 'WPD_WORKER_API_URL' ) ? WPD_WORKER_API_URL : HostInterface::API_URL;
+
 		$response = wp_remote_request(
-			HostInterface::API_URL . 'external-sites/' . get_option( 'wpd_connection_id' ),
+			$api_host . 'external-sites/' . get_option( 'wpd_connection_id' ),
 			array(
 				'method'  => 'DELETE',
 				'headers' => array(
@@ -58,6 +60,7 @@ class Admin extends Singleton {
 		if ( ! is_wp_error( $response ) ) {
 			$data = wp_remote_retrieve_body( $response );
 			$data = @json_decode( $data );
+
 			if ( isset( $data->message ) ) {
 				Plugin::instance()->get_host()->remove_connection();
 				wp_send_json_success( $data->message );
