@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Platform Worker
  * Description: This plugin powers our management platform.
- * Version: 3.4.1
+ * Version: 3.4.2
  * Text Domain: platform
  * Domain Path: /languages/
  */
@@ -16,7 +16,7 @@ if ( defined( 'PLATFORM_VERSION' ) ) {
 }
 
 define( 'PLATFORM_PLUGIN_SLUG', 'platform' );
-define( 'PLATFORM_VERSION', '3.4.1' );
+define( 'PLATFORM_VERSION', '3.4.2' );
 
 if ( defined( 'WPD_PLATFORM_IS_MU' ) && WPD_PLATFORM_IS_MU ) {
 	if ( ! defined( 'PLATFORM_PLUGIN_DIR' ) ) {
@@ -37,10 +37,9 @@ require_once 'bootstrap.php';
 /**
  * Load our Platform Code
  */
-add_action( 'plugins_loaded', 'pf_load_platform_code', 11 );
-function pf_load_platform_code() {
+add_action( 'plugins_loaded', function() {
 	\WPD_Platform\Plugin::instance();
-}
+}, 11 );
 
 // Register the plugin activation hook.
 register_activation_hook( __FILE__, array( \WPD_Platform\Plugin::instance(), 'activate_plugin' ) );
