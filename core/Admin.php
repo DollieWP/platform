@@ -265,7 +265,7 @@ class Admin extends Singleton {
 
 	public function trigger_update_hook() {
 		$payload = array(
-			'hash' => S5_APP_ID,
+			'hash' => Plugin::instance()->get_host()->get_token(),
 		);
 
 		$signature = hash_hmac( 'sha256', json_encode( $payload ), HostInterface::API_SIGNATURE );

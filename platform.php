@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Platform Worker
  * Description: This plugin powers our management platform.
- * Version: 3.4.2
+ * Version: 3.4.3
  * Text Domain: platform
  * Domain Path: /languages/
  */
@@ -16,7 +16,7 @@ if ( defined( 'PLATFORM_VERSION' ) ) {
 }
 
 define( 'PLATFORM_PLUGIN_SLUG', 'platform' );
-define( 'PLATFORM_VERSION', '3.4.2' );
+define( 'PLATFORM_VERSION', '3.4.3' );
 
 if ( defined( 'WPD_PLATFORM_IS_MU' ) && WPD_PLATFORM_IS_MU ) {
 	if ( ! defined( 'PLATFORM_PLUGIN_DIR' ) ) {
